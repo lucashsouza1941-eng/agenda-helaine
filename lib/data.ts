@@ -7,3 +7,10 @@ export const services: Service[] = [
   {id:'manutencao',name:'Manutenção',duration:'1 a 3 horas',price:'A definir',description:'Cuidado para prolongar a beleza e a durabilidade das suas tranças.',image:'linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)'}
 ];
 export const timeSlots=['09:00','10:00','11:00','14:00','15:00','16:00','17:00'];
+export const bookingStatuses = ['Pendente', 'Confirmado', 'Cancelado'] as const;
+export type BookingStatus = typeof bookingStatuses[number];
+export type Booking = { id:string; service_id:string; date:string; time:string; name:string; phone:string; email:string|null; status:BookingStatus; created_at:string };
+export const serviceName = (id:string) => services.find(s=>s.id===id)?.name ?? id;
+/** Data de hoje (AAAA-MM-DD) no fuso de São Paulo. */
+export const todaySP = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
+export const formatDateBR = (d:string) => d.split('-').reverse().join('/');

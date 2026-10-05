@@ -3,19 +3,32 @@ import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { services, timeSlots, todaySP, type Booking } from '@/lib/data';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
+const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isValidDate = (d: string) => DATE.test(d) && !Number.isNaN(Date.parse(d + 'T00:00:00Z')) && d >= todaySP();
 
 export type PublicBooking = Pick<Booking, 'id' | 'service_id' | 'date' | 'time' | 'status'>;
 
-/** Horários já ocupados numa data (sem dados das clientes). */
-export async function getTakenSlots(date: string): Promise<string[]> {
-  if (!supabaseConfigured() || !isValidDate(date)) return [];
+/** Horários ocupados numa data e se é dia de folga (sem dados das clientes). */
+export async function getDayAvailability(date: string): Promise<{ taken: string[]; dayOff: boolean }> {
+  if (!supabaseConfigured() || !isValidDate(date)) return { taken: [], dayOff: false };
+  const supabase = createServiceClient();
+  const [bookings, off] = await Promise.all([
+    supabase.from('bookings').select('time').eq('date', date).neq('status', 'Cancelado'),
+    supabase.from('blocked_dates').select('date').eq('date', date).maybeSingle(),
+  ]);
+  if (bookings.error || off.error) console.error('getDayAvailability', bookings.error ?? off.error);
+  return { taken: (bookings.data ?? []).map((r) => r.time), dayOff: Boolean(off.data) };
+}
+
+/** Próximos dias de folga, para avisar as clientes antes de escolherem a data. */
+export async function getUpcomingDaysOff(): Promise<string[]> {
+  if (!supabaseConfigured()) return [];
   const { data, error } = await createServiceClient()
-    .from('bookings').select('time').eq('date', date).neq('status', 'Cancelado');
-  if (error) { console.error('getTakenSlots', error); return []; }
-  return data.map((r) => r.time);
+    .from('blocked_dates').select('date').gte('date', todaySP()).order('date').limit(60);
+  if (error) { console.error('getUpcomingDaysOff', error); return []; }
+  return data.map((r) => r.date);
 }
 
 export async function createBooking(input: {
@@ -36,6 +49,7 @@ export async function createBooking(input: {
     .select('id').single();
   if (error) {
     if (error.code === '23505') return { error: 'Esse horário acabou de ser reservado. Escolha outro, por favor.' };
+    if (error.code === 'P0001' && error.message === 'dia_de_folga') return { error: DAY_OFF };
     console.error('createBooking', error);
     return { error: 'Não foi possível salvar o agendamento. Tente novamente.' };
   }

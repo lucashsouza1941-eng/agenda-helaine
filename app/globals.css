@@ -15,3 +15,12 @@
 .row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .row-actions button{border:1px solid var(--line);background:white;border-radius:999px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer}
 .row a{color:inherit}
+.days-off-note{font-size:12px;color:var(--muted);margin:-4px 0 12px}
+.days-off-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.days-off-form label{display:grid;gap:5px;font-size:12px;font-weight:800}
+.days-off-form input{border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-weight:400}
+.days-off-form .wide{grid-column:1/-1}
+.days-off-form .form-ok{grid-column:1/-1;background:#ddf3df;color:#28723b;border-radius:12px;padding:10px 12px;font-size:13px;margin:0}
+.days-off-form .form-error{grid-column:1/-1;margin:0}
+.admin-grid .admin-card.full{grid-column:1/-1}
+.off-flag{color:#9b2c22;font-style:normal;font-weight:800}

@@ -1,0 +1,2 @@
+import {Shell} from '@/components/Shell';
+export default function Page(){return <Shell><main className="page"><div className="page-title"><span className="eyebrow dark">Inspiração</span><h1>Galeria de trabalhos</h1><p>Espaços prontos para receber as fotos reais da Helaine.</p></div><div className="gallery">{Array.from({length:9}).map((_,i)=><div className={`gallery-item g${i%4}`} key={i}><span>FOTO {i+1}</span></div>)}</div></main></Shell>}

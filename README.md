@@ -3,22 +3,24 @@
 Site de agendamento em Next.js com banco e login de admin no Supabase.
 
 - **Clientes:** escolhem serviço, data e horário livre em `/agendar`. Não precisam de conta. Em `/meus-agendamentos` veem os agendamentos feitos naquele aparelho.
-- **Helaine:** entra em `/admin` com e-mail e senha, vê os próximos agendamentos (com link para o WhatsApp da cliente) e confirma ou cancela cada um.
-- **Dias de folga:** no `/admin`, a Helaine bloqueia um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
+- **Admins (pode haver mais de um):** entram em `/admin` com e-mail e senha, vê os próximos agendamentos (com link para o WhatsApp da cliente) e confirma ou cancela cada um.
+- **Dias de folga:** no `/admin`, os admins bloqueiam um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
 - Novos agendamentos entram como **Pendente**. Um horário só aceita um agendamento ativo; cancelar libera o horário.
 
 ## Configurar o Supabase (uma vez)
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
-2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` e depois o de `supabase/migrations/0002_folgas.sql` (um de cada vez, nessa ordem).
-3. Em **Authentication > Sign In / Providers**, desative **Allow new users to sign up** (só a Helaine terá conta).
-4. Em **Authentication > Users > Add user**, crie o usuário da Helaine com e-mail e senha (marque *Auto Confirm User*).
-5. No **SQL Editor**, dê permissão de admin a ela (troque o e-mail):
+2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql` e depois `0003_nome_admin.sql` (um de cada vez, nessa ordem).
+3. Em **Authentication > Sign In / Providers**, desative **Allow new users to sign up** (só os admins terão conta).
+4. Em **Authentication > Users > Add user > Create new user**, crie o login de cada admin com e-mail e senha (marque *Auto Confirm User*).
+5. No **SQL Editor**, dê permissão de admin a cada um (troque nome e e-mail; rode uma vez por pessoa):
 
    ```sql
-   insert into public.admins (user_id)
-   select id from auth.users where email = 'email-da-helaine@exemplo.com';
+   insert into public.admins (user_id, name)
+   select id, 'Helaine' from auth.users where email = 'email-da-helaine@exemplo.com';
    ```
+
+   Para tirar o acesso de alguém: `delete from public.admins where user_id = (select id from auth.users where email = '...');`
 
 6. Em **Project Settings > API**, copie a URL e as chaves para as variáveis de ambiente (veja `.env.example`):
 

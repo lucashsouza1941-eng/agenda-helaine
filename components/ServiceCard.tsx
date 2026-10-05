@@ -1,0 +1,2 @@
+import Link from 'next/link'; import type {Service} from '@/lib/data';
+export function ServiceCard({s}:{s:Service}){return <article className="service-card"><div className="service-photo" style={{background:s.image}}><span>HT</span></div><div><h3>{s.name}</h3><p>{s.description}</p><div className="meta"><span>⏱ {s.duration}</span><span>{s.price}</span></div><Link className="text-link" href={`/agendar?servico=${s.id}`}>Agendar →</Link></div></article>}

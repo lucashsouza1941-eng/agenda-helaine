@@ -1,0 +1,2 @@
+import {Shell} from '@/components/Shell';import {services} from '@/lib/data';import {ServiceCard} from '@/components/ServiceCard';
+export default function Page(){return <Shell><main className="page"><div className="page-title"><span className="eyebrow dark">Helaine Tranças</span><h1>Serviços</h1><p>Escolha o estilo e siga para o agendamento.</p></div><div className="cards">{services.map(s=><ServiceCard key={s.id} s={s}/>)}</div></main></Shell>}

@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
-import { bookingStatuses, formatDateBR, todaySP, type BookingStatus } from '@/lib/data';
+import { bookingStatuses, formatDateBR, timeSlots, todaySP, type BookingStatus } from '@/lib/data';
 
 export type SignInState = { error: string; email: string };
 
@@ -61,5 +61,34 @@ export async function removeDayOff(date: string) {
   const supabase = await createAuthClient();
   const { error } = await supabase.from('blocked_dates').delete().eq('date', date);
   if (error) console.error('removeDayOff', error);
+  revalidatePath('/admin');
+}
+
+export type BlockSlotsState = { error: string; ok: string };
+
+/** Bloqueia horários específicos de um dia. Agendamentos já feitos nesses horários não são cancelados. */
+export async function addBlockedSlots(_prev: BlockSlotsState, formData: FormData): Promise<BlockSlotsState> {
+  const date = String(formData.get('date') || '');
+  const times = [...new Set(formData.getAll('times').map(String))].filter((t) => timeSlots.includes(t)).sort();
+  const reason = String(formData.get('reason') || '').trim().slice(0, 120) || null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Escolha a data.', ok: '' };
+  if (date < todaySP()) return { error: 'Escolha uma data a partir de hoje.', ok: '' };
+  if (times.length === 0) return { error: 'Marque pelo menos um horário.', ok: '' };
+  const supabase = await createAuthClient();
+  const { error } = await supabase.from('blocked_slots')
+    .upsert(times.map((time) => ({ date, time, reason })), { onConflict: 'date,time', ignoreDuplicates: true });
+  if (error) { console.error('addBlockedSlots', error); return { error: 'Não foi possível bloquear. Tente novamente.', ok: '' }; }
+  const { count } = await supabase.from('bookings').select('id', { count: 'exact', head: true })
+    .eq('date', date).in('time', times).neq('status', 'Cancelado');
+  revalidatePath('/admin');
+  const what = `${formatDateBR(date)}: ${times.length === 1 ? `${times[0]} bloqueado.` : `${times.join(', ')} bloqueados.`}`;
+  const warn = count ? ` Atenção: ${count === 1 ? 'já existe 1 agendamento' : `já existem ${count} agendamentos`} nesse horário. Fale com a cliente e cancele na agenda, se for o caso.` : '';
+  return { error: '', ok: what + warn };
+}
+
+export async function removeBlockedSlot(date: string, time: string) {
+  const supabase = await createAuthClient();
+  const { error } = await supabase.from('blocked_slots').delete().eq('date', date).eq('time', time);
+  if (error) console.error('removeBlockedSlot', error);
   revalidatePath('/admin');
 }

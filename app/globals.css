@@ -35,3 +35,15 @@
 .new-booking p{color:var(--muted);margin:0 0 12px}
 .btn.whatsapp{background:#25d366;color:#fff}
 .whatsapp-link{display:inline-block;margin:8px 0 0 10px;font-size:12px;font-weight:800;color:#128c4a}
+.admin [id]{scroll-margin-top:16px}
+@media(max-width:900px){
+.admin{grid-template-columns:minmax(0,1fr)}
+.admin aside{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 14px;position:sticky;top:0;z-index:10;min-width:0}
+.admin-brand{font-size:20px;margin-right:auto}
+.admin aside nav{order:3;width:100%;min-width:0;display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.admin aside nav a{white-space:nowrap;padding:8px 11px;font-size:13px}
+.admin aside>a{margin-top:0}
+.admin aside form .quick-action{margin:0;padding:8px 12px;width:auto}
+}
+.admin-grid>*{min-width:0}
+@media(max-width:600px){.row{grid-template-columns:52px 1fr}.row-actions{grid-column:2;justify-content:flex-start}}

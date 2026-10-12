@@ -5,12 +5,13 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 - **Clientes:** escolhem serviço, data e horário livre em `/agendar`. Não precisam de conta. Em `/meus-agendamentos` veem os agendamentos feitos naquele aparelho.
 - **Admins (pode haver mais de um):** entram em `/admin` com e-mail e senha, vê os próximos agendamentos (com link para o WhatsApp da cliente) e confirma ou cancela cada um.
 - **Dias de folga:** no `/admin`, os admins bloqueiam um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
+- **Horários bloqueados:** no `/admin`, os admins também bloqueiam só alguns horários de um dia (ex.: consulta médica), do mesmo jeito.
 - Novos agendamentos entram como **Pendente**. Um horário só aceita um agendamento ativo; cancelar libera o horário.
 
 ## Configurar o Supabase (uma vez)
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
-2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql` e depois `0003_nome_admin.sql` (um de cada vez, nessa ordem).
+2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql`, `0003_nome_admin.sql` e `0004_horarios_bloqueados.sql` (um de cada vez, nessa ordem).
 3. Em **Authentication > Sign In / Providers**, desative **Allow new users to sign up** (só os admins terão conta).
 4. Em **Authentication > Users > Add user > Create new user**, crie o login de cada admin com e-mail e senha (marque *Auto Confirm User*).
 5. No **SQL Editor**, dê permissão de admin a cada um (troque nome e e-mail; rode uma vez por pessoa):
@@ -55,5 +56,4 @@ Abra `http://localhost:3000`.
 ## Próximos passos
 
 - Preços, PIX, horários reais e fotos oficiais.
-- Bloquear horários específicos (não só o dia inteiro).
 - Proteção contra spam no formulário (ex.: Cloudflare Turnstile).

@@ -30,3 +30,8 @@
 .days-off-form .slot-pick input{margin:0;padding:0}
 .slot-pick:has(input:checked){background:var(--gold);border-color:#dfa30d}
 .captcha{min-height:65px;margin-bottom:12px}
+.new-booking{background:var(--paper);border:2px solid #25d366;border-radius:20px;padding:22px;margin-bottom:18px}
+.new-booking h2{margin:0 0 6px}
+.new-booking p{color:var(--muted);margin:0 0 12px}
+.btn.whatsapp{background:#25d366;color:#fff}
+.whatsapp-link{display:inline-block;margin:8px 0 0 10px;font-size:12px;font-weight:800;color:#128c4a}

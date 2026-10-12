@@ -31,6 +31,21 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | chave `anon` / *publishable* |
    | `SUPABASE_SERVICE_ROLE_KEY` | chave `service_role` / *secret* — **nunca compartilhe** |
 
+## Proteção contra spam (opcional, recomendado)
+
+O formulário de `/agendar` pode usar o [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/), um captcha gratuito que quase sempre passa sozinho, sem a cliente precisar clicar em nada. Sem as chaves, o agendamento funciona normalmente, só que sem a verificação.
+
+1. Crie uma conta grátis em [dash.cloudflare.com](https://dash.cloudflare.com) e abra **Turnstile > Add widget**.
+2. Dê um nome, adicione o domínio do site (ex.: `seusite.vercel.app`; para testar no computador, `localhost`) e deixe o modo **Managed**.
+3. Copie as duas chaves para as variáveis de ambiente:
+
+   | Variável | Onde achar |
+   | --- | --- |
+   | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Site Key |
+   | `TURNSTILE_SECRET_KEY` | Secret Key — **nunca compartilhe** |
+
+4. Na Vercel, faça um novo deploy depois de adicionar as chaves.
+
 ## Rodar localmente
 
 ```bash
@@ -44,16 +59,16 @@ Abra `http://localhost:3000`.
 ## Deploy na Vercel
 
 1. Importe este repositório na Vercel (**Add New > Project**).
-2. Em **Environment Variables**, adicione as três variáveis acima.
+2. Em **Environment Variables**, adicione as três variáveis do Supabase (e as duas do Turnstile, se for usar).
 3. Clique em **Deploy**. Se adicionar ou trocar variáveis depois, faça um novo deploy.
 
 ## Segurança
 
 - As clientes nunca acessam o banco direto: o site grava e consulta pelo servidor, com a `service_role` key.
 - A outra cliente vê só que um horário está ocupado, nunca nome ou telefone.
+- Com o Turnstile configurado, o servidor confere o captcha na Cloudflare antes de gravar qualquer agendamento.
 - Regras de RLS no banco: só usuários listados em `public.admins` leem e alteram agendamentos.
 
 ## Próximos passos
 
 - Preços, PIX, horários reais e fotos oficiais.
-- Proteção contra spam no formulário (ex.: Cloudflare Turnstile).

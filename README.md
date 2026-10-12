@@ -6,6 +6,7 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 - **Admins (pode haver mais de um):** entram em `/admin` com e-mail e senha, vê os próximos agendamentos (com link para o WhatsApp da cliente) e confirma ou cancela cada um.
 - **Dias de folga:** no `/admin`, os admins bloqueiam um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
 - **Horários bloqueados:** no `/admin`, os admins também bloqueiam só alguns horários de um dia (ex.: consulta médica), do mesmo jeito.
+- **Aviso pelo WhatsApp:** depois de agendar, a cliente vê um botão "Avisar a Helaine no WhatsApp" que abre o WhatsApp dela com a mensagem pronta (serviço, dia e horário). Aparece quando `NEXT_PUBLIC_WHATSAPP_HELAINE` está configurada.
 - Novos agendamentos entram como **Pendente**. Um horário só aceita um agendamento ativo; cancelar libera o horário.
 
 ## Configurar o Supabase (uma vez)
@@ -45,6 +46,10 @@ O formulário de `/agendar` pode usar o [Cloudflare Turnstile](https://developer
    | `TURNSTILE_SECRET_KEY` | Secret Key — **nunca compartilhe** |
 
 4. Na Vercel, faça um novo deploy depois de adicionar as chaves.
+
+## Botão do WhatsApp
+
+Na Vercel, em **Settings > Environment Variables**, adicione `NEXT_PUBLIC_WHATSAPP_HELAINE` com o WhatsApp da Helaine com DDI e DDD (ex.: `5511999999999`) e faça um novo deploy. Sem essa variável, o botão não aparece.
 
 ## Rodar localmente
 

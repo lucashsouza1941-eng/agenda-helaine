@@ -1,9 +1,12 @@
 'use server';
+import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
+import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
 import { services, timeSlots, todaySP, type Booking } from '@/lib/data';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
+const CAPTCHA = 'Não conseguimos confirmar que você não é um robô. Marque a verificação de novo, por favor.';
 const SLOT_BLOCKED = 'A Helaine não atende nesse horário. Escolha outro, por favor.';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -34,7 +37,7 @@ export async function getUpcomingDaysOff(): Promise<string[]> {
 }
 
 export async function createBooking(input: {
-  serviceId: string; date: string; time: string; name: string; phone: string; email: string;
+  serviceId: string; date: string; time: string; name: string; phone: string; email: string; captcha?: string;
 }): Promise<{ id: string } | { error: string }> {
   if (!supabaseConfigured()) return { error: NOT_CONFIGURED };
   const name = input.name.trim(), phone = input.phone.trim(), email = input.email.trim();
@@ -44,6 +47,10 @@ export async function createBooking(input: {
   if (name.length < 2 || name.length > 120) return { error: 'Informe seu nome completo.' };
   if (phone.replace(/\D/g, '').length < 10 || phone.length > 30) return { error: 'Informe um telefone com DDD.' };
   if (email && (email.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return { error: 'E-mail inválido.' };
+  if (turnstileConfigured()) {
+    const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim();
+    if (!(await verifyTurnstile(input.captcha ?? '', ip))) return { error: CAPTCHA };
+  }
 
   const { data, error } = await createServiceClient()
     .from('bookings')

@@ -29,3 +29,4 @@
 .days-off-form .slot-pick{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-weight:600;cursor:pointer}
 .days-off-form .slot-pick input{margin:0;padding:0}
 .slot-pick:has(input:checked){background:var(--gold);border-color:#dfa30d}
+.captcha{min-height:65px;margin-bottom:12px}

@@ -2,7 +2,7 @@
 import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
-import { services, timeSlots, todaySP, type Booking } from '@/lib/data';
+import { isPastSlot, services, timeSlots, todaySP, type Booking } from '@/lib/data';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
@@ -44,6 +44,7 @@ export async function createBooking(input: {
   if (!services.some((s) => s.id === input.serviceId)) return { error: 'Escolha um serviço.' };
   if (!isValidDate(input.date)) return { error: 'Escolha uma data a partir de hoje.' };
   if (!timeSlots.includes(input.time)) return { error: 'Escolha um horário.' };
+  if (isPastSlot(input.date, input.time)) return { error: 'Esse horário já passou. Escolha outro, por favor.' };
   if (name.length < 2 || name.length > 120) return { error: 'Informe seu nome completo.' };
   if (phone.replace(/\D/g, '').length < 10 || phone.length > 30) return { error: 'Informe um telefone com DDD.' };
   if (email && (email.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return { error: 'E-mail inválido.' };

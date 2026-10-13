@@ -13,4 +13,8 @@ export type Booking = { id:string; service_id:string; date:string; time:string; 
 export const serviceName = (id:string) => services.find(s=>s.id===id)?.name ?? id;
 /** Data de hoje (AAAA-MM-DD) no fuso de São Paulo. */
 export const todaySP = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
+/** Hora atual (HH:MM) no fuso de São Paulo. */
+export const nowTimeSP = () => new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
+/** Horário de hoje que já passou (não dá mais para agendar). */
+export const isPastSlot = (date:string,time:string) => date < todaySP() || (date === todaySP() && time <= nowTimeSP());
 export const formatDateBR = (d:string) => d.split('-').reverse().join('/');

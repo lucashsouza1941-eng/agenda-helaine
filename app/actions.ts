@@ -2,7 +2,8 @@
 import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
-import { isPastSlot, services, timeSlots, todaySP, type Booking } from '@/lib/data';
+import { isPastSlot, todaySP, type Booking } from '@/lib/data';
+import { getActiveServices, getTimeSlots } from '@/lib/settings';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
@@ -41,6 +42,7 @@ export async function createBooking(input: {
 }): Promise<{ id: string } | { error: string }> {
   if (!supabaseConfigured()) return { error: NOT_CONFIGURED };
   const name = input.name.trim(), phone = input.phone.trim(), email = input.email.trim();
+  const [services, timeSlots] = await Promise.all([getActiveServices(), getTimeSlots()]);
   if (!services.some((s) => s.id === input.serviceId)) return { error: 'Escolha um serviço.' };
   if (!isValidDate(input.date)) return { error: 'Escolha uma data a partir de hoje.' };
   if (!timeSlots.includes(input.time)) return { error: 'Escolha um horário.' };

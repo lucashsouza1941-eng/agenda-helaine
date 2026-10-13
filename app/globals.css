@@ -52,3 +52,16 @@
 .top nav{display:flex;order:3;width:100%;gap:6px;overflow-x:auto;padding-bottom:2px}
 .top nav a{white-space:nowrap;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:white}
 }
+.settings-form{display:grid;gap:12px}
+.service-row{border:1px solid var(--line);border-radius:12px;padding:10px 12px 12px;margin:0;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.service-row legend{font-weight:800;padding:0 4px}
+.settings-form label{display:grid;gap:5px;font-size:12px;font-weight:800}
+.settings-form input:not([type=checkbox]){border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-weight:400}
+.settings-form label.check{display:flex;align-items:center;gap:6px;padding-bottom:9px;white-space:nowrap}
+.settings-form .slot-pick{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:10px;padding:7px 10px;font-weight:600;cursor:pointer}
+.settings-form .slot-pick input{margin:0}
+.settings-form .form-error,.settings-form .form-ok{margin:0}
+.settings-form .form-ok{background:#ddf3df;color:#28723b;border-radius:12px;padding:10px 12px;font-size:13px}
+.settings-form .btn{justify-self:start}
+.small{font-size:12px;margin:0}
+@media(max-width:600px){.service-row{grid-template-columns:1fr}.settings-form label.check{padding-bottom:0}}

@@ -2,7 +2,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
-import { bookingStatuses, formatDateBR, timeSlots, todaySP, type BookingStatus } from '@/lib/data';
+import { bookingStatuses, formatDateBR, services, todaySP, type BookingStatus } from '@/lib/data';
+import { getTimeSlots, slotOptions } from '@/lib/settings';
 
 export type SignInState = { error: string; email: string };
 
@@ -69,6 +70,7 @@ export type BlockSlotsState = { error: string; ok: string };
 /** Bloqueia horários específicos de um dia. Agendamentos já feitos nesses horários não são cancelados. */
 export async function addBlockedSlots(_prev: BlockSlotsState, formData: FormData): Promise<BlockSlotsState> {
   const date = String(formData.get('date') || '');
+  const timeSlots = await getTimeSlots();
   const times = [...new Set(formData.getAll('times').map(String))].filter((t) => timeSlots.includes(t)).sort();
   const reason = String(formData.get('reason') || '').trim().slice(0, 120) || null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: 'Escolha a data.', ok: '' };
@@ -91,4 +93,35 @@ export async function removeBlockedSlot(date: string, time: string) {
   const { error } = await supabase.from('blocked_slots').delete().eq('date', date).eq('time', time);
   if (error) console.error('removeBlockedSlot', error);
   revalidatePath('/admin');
+}
+
+export type SettingsState = { error: string; ok: string };
+
+/** Salva preço, duração e visibilidade de cada serviço. */
+export async function saveServices(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const rows = services.map((s) => ({
+    service_id: s.id,
+    price: String(formData.get(`price_${s.id}`) || '').trim().slice(0, 40) || null,
+    duration: String(formData.get(`duration_${s.id}`) || '').trim().slice(0, 40) || null,
+    active: formData.get(`active_${s.id}`) === 'on',
+    updated_at: new Date().toISOString(),
+  }));
+  if (!rows.some((r) => r.active)) return { error: 'Deixe pelo menos um serviço aparecendo no site.', ok: '' };
+  const supabase = await createAuthClient();
+  const { error } = await supabase.from('service_settings').upsert(rows, { onConflict: 'service_id' });
+  if (error) { console.error('saveServices', error); return { error: 'Não foi possível salvar. Confira se a migração 0005 foi rodada no Supabase.', ok: '' }; }
+  revalidatePath('/', 'layout');
+  return { error: '', ok: 'Serviços salvos. O site já mostra os novos valores.' };
+}
+
+/** Salva os horários de atendimento. Agendamentos já feitos não mudam. */
+export async function saveOpeningSlots(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const times = [...new Set(formData.getAll('times').map(String))].filter((t) => slotOptions.includes(t)).sort();
+  if (times.length === 0) return { error: 'Marque pelo menos um horário.', ok: '' };
+  const supabase = await createAuthClient();
+  const { error: delError } = await supabase.from('opening_slots').delete().not('time', 'in', `(${times.map((t) => `"${t}"`).join(',')})`);
+  const { error } = delError ? { error: delError } : await supabase.from('opening_slots').upsert(times.map((time) => ({ time })), { onConflict: 'time', ignoreDuplicates: true });
+  if (error) { console.error('saveOpeningSlots', error); return { error: 'Não foi possível salvar. Confira se a migração 0005 foi rodada no Supabase.', ok: '' }; }
+  revalidatePath('/', 'layout');
+  return { error: '', ok: `Horários salvos: ${times.join(', ')}.` };
 }

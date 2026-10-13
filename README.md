@@ -7,12 +7,13 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 - **Dias de folga:** no `/admin`, os admins bloqueiam um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
 - **Horários bloqueados:** no `/admin`, os admins também bloqueiam só alguns horários de um dia (ex.: consulta médica), do mesmo jeito.
 - **Aviso pelo WhatsApp:** depois de agendar, a cliente vê um botão "Avisar a Helaine no WhatsApp" que abre o WhatsApp dela com a mensagem pronta (serviço, dia e horário). Aparece quando `NEXT_PUBLIC_WHATSAPP_HELAINE` está configurada.
+- **Serviços, preços e horários:** no `/admin`, os admins editam preço e duração de cada serviço, escolhem quais aparecem no site e marcam os horários de atendimento. Enquanto nada for salvo, o site usa os valores padrão do código.
 - Novos agendamentos entram como **Pendente**. Um horário só aceita um agendamento ativo; cancelar libera o horário.
 
 ## Configurar o Supabase (uma vez)
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
-2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql`, `0003_nome_admin.sql` e `0004_horarios_bloqueados.sql` (um de cada vez, nessa ordem).
+2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql`, `0003_nome_admin.sql`, `0004_horarios_bloqueados.sql` e `0005_configuracoes.sql` (um de cada vez, nessa ordem).
 3. Em **Authentication > Sign In / Providers**, desative **Allow new users to sign up** (só os admins terão conta).
 4. Em **Authentication > Users > Add user > Create new user**, crie o login de cada admin com e-mail e senha (marque *Auto Confirm User*).
 5. No **SQL Editor**, dê permissão de admin a cada um (troque nome e e-mail; rode uma vez por pessoa):
@@ -76,4 +77,4 @@ Abra `http://localhost:3000`.
 
 ## Próximos passos
 
-- Preços, PIX, horários reais e fotos oficiais.
+- PIX e fotos oficiais.

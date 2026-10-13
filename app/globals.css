@@ -47,3 +47,8 @@
 }
 .admin-grid>*{min-width:0}
 @media(max-width:600px){.row{grid-template-columns:52px 1fr}.row-actions{grid-column:2;justify-content:flex-start}}
+@media(max-width:900px){
+.top{height:auto;flex-wrap:wrap;gap:6px 20px;padding-top:10px;padding-bottom:8px}
+.top nav{display:flex;order:3;width:100%;gap:6px;overflow-x:auto;padding-bottom:2px}
+.top nav a{white-space:nowrap;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:white}
+}

@@ -2,7 +2,7 @@
 
 Site de agendamento em Next.js com banco e login de admin no Supabase.
 
-- **Clientes:** escolhem serviço, data e horário livre em `/agendar`. Não precisam de conta. Em `/meus-agendamentos` veem os agendamentos feitos naquele aparelho.
+- **Clientes:** escolhem serviço, data e horário livre em `/agendar`. Não precisam de conta. Em `/meus-agendamentos` veem os agendamentos feitos naquele aparelho e podem cancelar até 24 horas antes (com menos tempo, o site pede para falar com a Helaine).
 - **Admins (pode haver mais de um):** entram em `/admin` com e-mail e senha, vê os próximos agendamentos (com link para o WhatsApp da cliente) e confirma ou cancela cada um.
 - **Dias de folga:** no `/admin`, os admins bloqueiam um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
 - **Horários bloqueados:** no `/admin`, os admins também bloqueiam só alguns horários de um dia (ex.: consulta médica), do mesmo jeito.

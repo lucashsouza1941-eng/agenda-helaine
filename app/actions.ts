@@ -2,7 +2,7 @@
 import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
-import { isPastSlot, todaySP, type Booking } from '@/lib/data';
+import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, todaySP, type Booking } from '@/lib/data';
 import { getActiveServices, getTimeSlots } from '@/lib/settings';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
@@ -78,4 +78,19 @@ export async function getMyBookings(ids: string[]): Promise<PublicBooking[]> {
     .order('date', { ascending: false }).order('time', { ascending: false });
   if (error) { console.error('getMyBookings', error); return []; }
   return data as PublicBooking[];
+}
+
+/** A cliente cancela o próprio agendamento (só quem tem o ID, guardado no aparelho dela). */
+export async function cancelMyBooking(id: string): Promise<{ ok: true } | { error: string }> {
+  if (!supabaseConfigured()) return { error: NOT_CONFIGURED };
+  if (!UUID.test(id)) return { error: 'Agendamento não encontrado.' };
+  const supabase = createServiceClient();
+  const { data: b, error } = await supabase.from('bookings').select('date, time, status').eq('id', id).maybeSingle();
+  if (error) { console.error('cancelMyBooking', error); return { error: 'Não foi possível cancelar. Tente novamente.' }; }
+  if (!b) return { error: 'Agendamento não encontrado.' };
+  if (b.status === 'Cancelado') return { ok: true };
+  if (hoursUntil(b.date, b.time) < CANCEL_MIN_HOURS) return { error: `Faltam menos de ${CANCEL_MIN_HOURS} horas. Para cancelar, fale com a Helaine pelo WhatsApp.` };
+  const { error: upError } = await supabase.from('bookings').update({ status: 'Cancelado' }).eq('id', id).neq('status', 'Cancelado');
+  if (upError) { console.error('cancelMyBooking', upError); return { error: 'Não foi possível cancelar. Tente novamente.' }; }
+  return { ok: true };
 }

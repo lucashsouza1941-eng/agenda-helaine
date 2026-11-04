@@ -17,4 +17,8 @@ export const todaySP = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/
 export const nowTimeSP = () => new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
 /** Horário de hoje que já passou (não dá mais para agendar). */
 export const isPastSlot = (date:string,time:string) => date < todaySP() || (date === todaySP() && time <= nowTimeSP());
+/** Antecedência mínima (em horas) para a cliente cancelar pelo site. */
+export const CANCEL_MIN_HOURS = 24;
+/** Horas que faltam para o horário do agendamento (fuso de São Paulo, UTC-3). */
+export const hoursUntil = (date:string,time:string) => (Date.parse(`${date}T${time}:00-03:00`) - Date.now()) / 36e5;
 export const formatDateBR = (d:string) => d.split('-').reverse().join('/');

@@ -70,3 +70,4 @@
 .cancel-note{display:block;margin-top:8px;font-size:12px;color:var(--muted)}
 .booking-item .form-ok,.booking-item .form-error{margin:8px 0 0;font-size:13px}
 .booking-item .form-ok{background:#ddf3df;color:#28723b;border-radius:10px;padding:8px 10px}
+.settings-form select{border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-weight:400;background:white;max-width:160px}

@@ -13,22 +13,27 @@ export function ServicesForm({ services }: { services: ServiceWithStatus[] }) {
     {services.map((s) => <fieldset key={s.id} className="service-row">
       <legend>{s.name}</legend>
       <label>Preço<input name={`price_${s.id}`} defaultValue={s.price === 'A definir' ? '' : s.price} maxLength={40} placeholder="Ex.: R$ 250 ou a partir de R$ 200" /></label>
-      <label>Duração<input name={`duration_${s.id}`} defaultValue={s.duration} maxLength={40} placeholder="Ex.: 3 a 4 horas" /></label>
+      <label>Duração (texto que a cliente lê)<input name={`duration_${s.id}`} defaultValue={s.duration} maxLength={40} placeholder="Ex.: 3 a 4 horas" /></label>
+      <label>Tempo reservado na agenda (horas)<input name={`hours_${s.id}`} defaultValue={String(s.minutes / 60).replace('.', ',')} inputMode="decimal" required maxLength={5} placeholder="Ex.: 4 ou 4,5" /></label>
       <label className="check"><input type="checkbox" name={`active_${s.id}`} defaultChecked={s.active} /> Mostrar no site</label>
     </fieldset>)}
-    <p className="muted small">Preço em branco aparece como “A definir”.</p>
+    <p className="muted small">Preço em branco aparece como “A definir”. O tempo reservado bloqueia a agenda: enquanto um atendimento não termina, nenhuma cliente consegue marcar outro. Mudar o tempo não altera agendamentos já feitos.</p>
     <Feedback state={state} />
     <button className="btn gold" disabled={pending}>{pending ? 'Salvando...' : 'Salvar serviços'}</button>
   </form>;
 }
 
-export function OpeningHoursForm({ options, selected }: { options: string[]; selected: string[] }) {
+export function OpeningHoursForm({ options, selected, closingOptions, closing }: { options: string[]; selected: string[]; closingOptions: string[]; closing: string }) {
   const [state, action, pending] = useActionState(saveOpeningSlots, { error: '', ok: '' });
   return <form action={action} className="settings-form">
     <fieldset className="slot-picks">
       <legend>Horários em que as clientes podem agendar</legend>
       {options.map((t) => <label key={t} className="slot-pick"><input type="checkbox" name="times" value={t} defaultChecked={selected.includes(t)} /><span>{t}</span></label>)}
     </fieldset>
+    <label>Atendimento até
+      <select name="closing" defaultValue={closing}>{closingOptions.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+    </label>
+    <p className="muted small">Nenhum serviço pode terminar depois desse horário: o site só oferece os horários em que o serviço inteiro cabe.</p>
     <p className="muted small">Vale para todos os dias. Para tirar um dia ou um horário específico, use as folgas e os horários bloqueados.</p>
     <Feedback state={state} />
     <button className="btn gold" disabled={pending}>{pending ? 'Salvando...' : 'Salvar horários'}</button>

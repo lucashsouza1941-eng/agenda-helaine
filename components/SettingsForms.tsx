@@ -23,13 +23,17 @@ export function ServicesForm({ services }: { services: ServiceWithStatus[] }) {
   </form>;
 }
 
-export function OpeningHoursForm({ options, selected }: { options: string[]; selected: string[] }) {
+export function OpeningHoursForm({ options, selected, closingOptions, closing }: { options: string[]; selected: string[]; closingOptions: string[]; closing: string }) {
   const [state, action, pending] = useActionState(saveOpeningSlots, { error: '', ok: '' });
   return <form action={action} className="settings-form">
     <fieldset className="slot-picks">
       <legend>Horários em que as clientes podem agendar</legend>
       {options.map((t) => <label key={t} className="slot-pick"><input type="checkbox" name="times" value={t} defaultChecked={selected.includes(t)} /><span>{t}</span></label>)}
     </fieldset>
+    <label>Atendimento até
+      <select name="closing" defaultValue={closing}>{closingOptions.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+    </label>
+    <p className="muted small">Nenhum serviço pode terminar depois desse horário: o site só oferece os horários em que o serviço inteiro cabe.</p>
     <p className="muted small">Vale para todos os dias. Para tirar um dia ou um horário específico, use as folgas e os horários bloqueados.</p>
     <Feedback state={state} />
     <button className="btn gold" disabled={pending}>{pending ? 'Salvando...' : 'Salvar horários'}</button>

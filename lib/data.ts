@@ -30,11 +30,14 @@ export const fromMinutes = (m:number) => `${String(Math.floor(m/60)%24).padStart
 export const formatDuration = (m:number) => `${Math.floor(m/60)}h${m%60?String(m%60).padStart(2,'0'):''}`;
 /** Limites do tempo reservado por serviço (iguais aos do banco). */
 export const MIN_SERVICE_MINUTES = 30, MAX_SERVICE_MINUTES = 720;
+/** Até que horas vai o atendimento, se nada for salvo no /admin. Nenhum serviço termina depois disso. */
+export const DEFAULT_CLOSING_TIME = '20:00';
 /** Intervalo ocupado na agenda, em minutos desde a meia-noite. */
 export type BusyInterval = { start:number; end:number };
 /** Por que um serviço de `minutes` não pode começar em `time` (ou null se pode). */
-export function slotConflict(time:string, minutes:number, busy:BusyInterval[], blocked:string[]): 'busy'|'blocked'|null {
+export function slotConflict(time:string, minutes:number, busy:BusyInterval[], blocked:string[], closing=DEFAULT_CLOSING_TIME): 'busy'|'blocked'|'closed'|null {
   const start=toMinutes(time), end=start+minutes;
+  if (end>toMinutes(closing)) return 'closed';
   if (blocked.some(b=>{ const m=toMinutes(b); return m>=start && m<end; })) return 'blocked';
   if (busy.some(b=>b.start<end && start<b.end)) return 'busy';
   return null;

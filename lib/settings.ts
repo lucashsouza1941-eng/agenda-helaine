@@ -1,5 +1,5 @@
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
-import { services as defaultServices, timeSlots as defaultTimeSlots, type Service } from '@/lib/data';
+import { DEFAULT_CLOSING_TIME, services as defaultServices, timeSlots as defaultTimeSlots, type Service } from '@/lib/data';
 
 export type ServiceWithStatus = Service & { active: boolean };
 
@@ -36,4 +36,16 @@ export async function getTimeSlots(): Promise<string[]> {
   const { data, error } = await createServiceClient().from('opening_slots').select('time').order('time');
   if (error) { console.error('getTimeSlots', error); return defaultTimeSlots; }
   return data.length ? data.map((r) => r.time) : defaultTimeSlots;
+}
+
+/** Opções de horário de fechamento: 12:00 a 23:30, de meia em meia hora. */
+export const closingOptions = Array.from({ length: 24 }, (_, i) => `${String(12 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+
+/** Até que horas vai o atendimento (editado no /admin, ou 20:00). */
+export async function getClosingTime(): Promise<string> {
+  if (!supabaseConfigured()) return DEFAULT_CLOSING_TIME;
+  const { data, error } = await createServiceClient().from('site_settings').select('value').eq('key', 'closing_time').maybeSingle();
+  // Antes da migração 0006 a tabela não existe: usa o padrão.
+  if (error) { if (error.code !== '42P01' && error.code !== 'PGRST205') console.error('getClosingTime', error); return DEFAULT_CLOSING_TIME; }
+  return data && closingOptions.includes(data.value) ? data.value : DEFAULT_CLOSING_TIME;
 }

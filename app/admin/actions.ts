@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
 import { bookingStatuses, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, services, todaySP, type BookingStatus } from '@/lib/data';
-import { getTimeSlots, slotOptions } from '@/lib/settings';
+import { closingOptions, getTimeSlots, slotOptions } from '@/lib/settings';
 
 export type SignInState = { error: string; email: string };
 
@@ -123,10 +123,15 @@ export async function saveServices(_prev: SettingsState, formData: FormData): Pr
 export async function saveOpeningSlots(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
   const times = [...new Set(formData.getAll('times').map(String))].filter((t) => slotOptions.includes(t)).sort();
   if (times.length === 0) return { error: 'Marque pelo menos um horário.', ok: '' };
+  const closing = String(formData.get('closing') || '');
+  if (!closingOptions.includes(closing)) return { error: 'Escolha até que horas vai o atendimento.', ok: '' };
+  if (times[0] >= closing) return { error: `O atendimento encerra às ${closing}: marque algum horário antes disso.`, ok: '' };
   const supabase = await createAuthClient();
+  const { error: closeError } = await supabase.from('site_settings').upsert({ key: 'closing_time', value: closing }, { onConflict: 'key' });
+  if (closeError) { console.error('saveOpeningSlots', closeError); return { error: 'Não foi possível salvar. Confira se a migração 0006 foi rodada no Supabase.', ok: '' }; }
   const { error: delError } = await supabase.from('opening_slots').delete().not('time', 'in', `(${times.map((t) => `"${t}"`).join(',')})`);
   const { error } = delError ? { error: delError } : await supabase.from('opening_slots').upsert(times.map((time) => ({ time })), { onConflict: 'time', ignoreDuplicates: true });
   if (error) { console.error('saveOpeningSlots', error); return { error: 'Não foi possível salvar. Confira se a migração 0005 foi rodada no Supabase.', ok: '' }; }
   revalidatePath('/', 'layout');
-  return { error: '', ok: `Horários salvos: ${times.join(', ')}.` };
+  return { error: '', ok: `Horários salvos: ${times.join(', ')}. Atendimento até as ${closing}.` };
 }

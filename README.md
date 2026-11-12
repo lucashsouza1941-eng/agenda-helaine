@@ -9,6 +9,7 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 - **Aviso pelo WhatsApp:** depois de agendar, a cliente vê um botão "Avisar a Helaine no WhatsApp" que abre o WhatsApp dela com a mensagem pronta (serviço, dia e horário). Aparece quando `NEXT_PUBLIC_WHATSAPP_HELAINE` está configurada.
 - **Serviços, preços e horários:** no `/admin`, os admins editam preço e duração de cada serviço, escolhem quais aparecem no site e marcam os horários de atendimento. Enquanto nada for salvo, o site usa os valores padrão do código.
 - **Tempo de cada serviço:** cada serviço reserva um tempo na agenda (ex.: Box Braids, 6 horas), editável no `/admin`. Enquanto um atendimento não termina, nenhuma cliente consegue marcar outro: o site só mostra livres os horários em que o serviço inteiro cabe, e o banco recusa sobreposição.
+- **Fim do atendimento:** nenhum serviço pode terminar depois do horário de fechamento (20:00 por padrão, editável no `/admin` em "Horários de atendimento").
 - Novos agendamentos entram como **Pendente**. Cancelar libera o tempo reservado.
 
 ## Configurar o Supabase (uma vez)

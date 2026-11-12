@@ -83,3 +83,49 @@ drop trigger if exists bookings_sem_sobreposicao on public.bookings;
 create trigger bookings_sem_sobreposicao
   before insert or update of status, date, time, duration_minutes on public.bookings
   for each row execute function public.bloqueia_agendamento_sobreposto();
+
+-- Configurações gerais do site (chave e valor). Editáveis no /admin.
+create table if not exists public.site_settings (
+  key text primary key check (char_length(key) <= 40),
+  value text not null check (char_length(value) <= 200)
+);
+
+alter table public.site_settings enable row level security;
+
+drop policy if exists "admin le configuracoes" on public.site_settings;
+create policy "admin le configuracoes" on public.site_settings
+  for select to authenticated using (public.is_admin());
+drop policy if exists "admin cria configuracoes" on public.site_settings;
+create policy "admin cria configuracoes" on public.site_settings
+  for insert to authenticated with check (public.is_admin());
+drop policy if exists "admin altera configuracoes" on public.site_settings;
+create policy "admin altera configuracoes" on public.site_settings
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- Até que horas vai o atendimento: nenhum serviço pode terminar depois disso.
+insert into public.site_settings (key, value) values ('closing_time', '20:00')
+  on conflict (key) do nothing;
+
+create or replace function public.bloqueia_agendamento_apos_fechamento()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  fechamento text;
+begin
+  select value into fechamento from public.site_settings where key = 'closing_time';
+  if fechamento ~ '^[0-2][0-9]:[0-5][0-9]$'
+     and public.minutos(new.time) + new.duration_minutes > public.minutos(fechamento) then
+    raise exception 'depois_do_fechamento' using errcode = 'P0001', hint = 'closing_time';
+  end if;
+  return new;
+end;
+$$;
+
+-- Só na criação: confirmar ou cancelar um agendamento antigo não é barrado.
+drop trigger if exists bookings_dentro_do_expediente on public.bookings;
+create trigger bookings_dentro_do_expediente
+  before insert on public.bookings
+  for each row execute function public.bloqueia_agendamento_apos_fechamento();

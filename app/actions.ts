@@ -3,12 +3,13 @@ import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
 import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, services as defaultServices, slotConflict, todaySP, toMinutes, type Booking, type BusyInterval } from '@/lib/data';
-import { getActiveServices, getTimeSlots, isMissingColumn } from '@/lib/settings';
+import { getActiveServices, getClosingTime, getTimeSlots, isMissingColumn } from '@/lib/settings';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
 const CAPTCHA = 'Não conseguimos confirmar que você não é um robô. Marque a verificação de novo, por favor.';
 const SLOT_TAKEN = 'Esse horário não está mais livre para este serviço. Escolha outro, por favor.';
+const tooLate = (closing: string) => `Esse serviço terminaria depois das ${closing}, quando o atendimento encerra. Escolha um horário mais cedo, por favor.`;
 const SLOT_BLOCKED = 'A Helaine não atende nesse horário. Escolha outro, por favor.';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -59,7 +60,7 @@ export async function createBooking(input: {
 }): Promise<{ id: string } | { error: string }> {
   if (!supabaseConfigured()) return { error: NOT_CONFIGURED };
   const name = input.name.trim(), phone = input.phone.trim(), email = input.email.trim();
-  const [services, timeSlots] = await Promise.all([getActiveServices(), getTimeSlots()]);
+  const [services, timeSlots, closing] = await Promise.all([getActiveServices(), getTimeSlots(), getClosingTime()]);
   const service = services.find((s) => s.id === input.serviceId);
   if (!service) return { error: 'Escolha um serviço.' };
   if (!isValidDate(input.date)) return { error: 'Escolha uma data a partir de hoje.' };
@@ -77,7 +78,8 @@ export async function createBooking(input: {
   // mesmo antes da migração e evita uma ida ao banco à toa.
   const day = await getDayAvailability(input.date);
   if (day.dayOff) return { error: DAY_OFF };
-  const conflict = slotConflict(input.time, service.minutes, day.busy, day.blocked);
+  const conflict = slotConflict(input.time, service.minutes, day.busy, day.blocked, closing);
+  if (conflict === 'closed') return { error: tooLate(closing) };
   if (conflict) return { error: conflict === 'blocked' ? SLOT_BLOCKED : SLOT_TAKEN };
 
   const supabase = createServiceClient();
@@ -87,6 +89,7 @@ export async function createBooking(input: {
   if (error || !data) {
     if (error?.code === '23505' || (error?.code === 'P0001' && error.message === 'horario_ocupado')) return { error: SLOT_TAKEN };
     if (error?.code === 'P0001' && error.message === 'dia_de_folga') return { error: DAY_OFF };
+    if (error?.code === 'P0001' && error.message === 'depois_do_fechamento') return { error: tooLate(closing) };
     if (error?.code === 'P0001' && error.message === 'horario_bloqueado') return { error: SLOT_BLOCKED };
     console.error('createBooking', error);
     return { error: 'Não foi possível salvar o agendamento. Tente novamente.' };

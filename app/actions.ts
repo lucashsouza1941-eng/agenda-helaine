@@ -2,12 +2,13 @@
 import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
-import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, todaySP, type Booking } from '@/lib/data';
-import { getActiveServices, getTimeSlots } from '@/lib/settings';
+import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, services as defaultServices, slotConflict, todaySP, toMinutes, type Booking, type BusyInterval } from '@/lib/data';
+import { getActiveServices, getTimeSlots, isMissingColumn } from '@/lib/settings';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
 const CAPTCHA = 'Não conseguimos confirmar que você não é um robô. Marque a verificação de novo, por favor.';
+const SLOT_TAKEN = 'Esse horário não está mais livre para este serviço. Escolha outro, por favor.';
 const SLOT_BLOCKED = 'A Helaine não atende nesse horário. Escolha outro, por favor.';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -15,17 +16,33 @@ const isValidDate = (d: string) => DATE.test(d) && !Number.isNaN(Date.parse(d + 
 
 export type PublicBooking = Pick<Booking, 'id' | 'service_id' | 'date' | 'time' | 'status'>;
 
-/** Horários ocupados, horários bloqueados e se é dia de folga (sem dados das clientes). */
-export async function getDayAvailability(date: string): Promise<{ taken: string[]; blocked: string[]; dayOff: boolean }> {
-  if (!supabaseConfigured() || !isValidDate(date)) return { taken: [], blocked: [], dayOff: false };
+type BusyRow = { time: string; service_id: string; duration_minutes?: number | null };
+
+/** Intervalos ocupados pelos agendamentos ativos de um dia. */
+async function getBusyIntervals(date: string): Promise<BusyInterval[]> {
   const supabase = createServiceClient();
-  const [bookings, off, slots] = await Promise.all([
-    supabase.from('bookings').select('time').eq('date', date).neq('status', 'Cancelado'),
+  const query = (cols: string) => supabase.from('bookings').select(cols).eq('date', date).neq('status', 'Cancelado').returns<BusyRow[]>();
+  let { data, error } = await query('time, service_id, duration_minutes');
+  // Antes da migração 0006 a coluna não existe: usa o tempo padrão de cada serviço.
+  if (error && isMissingColumn(error)) ({ data, error } = await query('time, service_id'));
+  if (error) console.error('getBusyIntervals', error);
+  return (data ?? []).map((r) => {
+    const start = toMinutes(r.time);
+    return { start, end: start + (r.duration_minutes || defaultServices.find((s) => s.id === r.service_id)?.minutes || 60) };
+  });
+}
+
+/** Intervalos ocupados, horários bloqueados e se é dia de folga (sem dados das clientes). */
+export async function getDayAvailability(date: string): Promise<{ busy: BusyInterval[]; blocked: string[]; dayOff: boolean }> {
+  if (!supabaseConfigured() || !isValidDate(date)) return { busy: [], blocked: [], dayOff: false };
+  const supabase = createServiceClient();
+  const [busy, off, slots] = await Promise.all([
+    getBusyIntervals(date),
     supabase.from('blocked_dates').select('date').eq('date', date).maybeSingle(),
     supabase.from('blocked_slots').select('time').eq('date', date),
   ]);
-  if (bookings.error || off.error || slots.error) console.error('getDayAvailability', bookings.error ?? off.error ?? slots.error);
-  return { taken: (bookings.data ?? []).map((r) => r.time), blocked: (slots.data ?? []).map((r) => r.time), dayOff: Boolean(off.data) };
+  if (off.error || slots.error) console.error('getDayAvailability', off.error ?? slots.error);
+  return { busy, blocked: (slots.data ?? []).map((r) => r.time), dayOff: Boolean(off.data) };
 }
 
 /** Próximos dias de folga, para avisar as clientes antes de escolherem a data. */
@@ -43,7 +60,8 @@ export async function createBooking(input: {
   if (!supabaseConfigured()) return { error: NOT_CONFIGURED };
   const name = input.name.trim(), phone = input.phone.trim(), email = input.email.trim();
   const [services, timeSlots] = await Promise.all([getActiveServices(), getTimeSlots()]);
-  if (!services.some((s) => s.id === input.serviceId)) return { error: 'Escolha um serviço.' };
+  const service = services.find((s) => s.id === input.serviceId);
+  if (!service) return { error: 'Escolha um serviço.' };
   if (!isValidDate(input.date)) return { error: 'Escolha uma data a partir de hoje.' };
   if (!timeSlots.includes(input.time)) return { error: 'Escolha um horário.' };
   if (isPastSlot(input.date, input.time)) return { error: 'Esse horário já passou. Escolha outro, por favor.' };
@@ -55,14 +73,21 @@ export async function createBooking(input: {
     if (!(await verifyTurnstile(input.captcha ?? '', ip))) return { error: CAPTCHA };
   }
 
-  const { data, error } = await createServiceClient()
-    .from('bookings')
-    .insert({ service_id: input.serviceId, date: input.date, time: input.time, name, phone, email: email || null })
-    .select('id').single();
-  if (error) {
-    if (error.code === '23505') return { error: 'Esse horário acabou de ser reservado. Escolha outro, por favor.' };
-    if (error.code === 'P0001' && error.message === 'dia_de_folga') return { error: DAY_OFF };
-    if (error.code === 'P0001' && error.message === 'horario_bloqueado') return { error: SLOT_BLOCKED };
+  // O banco confere de novo (trigger da migração 0006), mas checar aqui dá a resposta certa
+  // mesmo antes da migração e evita uma ida ao banco à toa.
+  const day = await getDayAvailability(input.date);
+  if (day.dayOff) return { error: DAY_OFF };
+  const conflict = slotConflict(input.time, service.minutes, day.busy, day.blocked);
+  if (conflict) return { error: conflict === 'blocked' ? SLOT_BLOCKED : SLOT_TAKEN };
+
+  const supabase = createServiceClient();
+  const row = { service_id: input.serviceId, date: input.date, time: input.time, name, phone, email: email || null };
+  let { data, error } = await supabase.from('bookings').insert({ ...row, duration_minutes: service.minutes }).select('id').single();
+  if (error && isMissingColumn(error)) ({ data, error } = await supabase.from('bookings').insert(row).select('id').single());
+  if (error || !data) {
+    if (error?.code === '23505' || (error?.code === 'P0001' && error.message === 'horario_ocupado')) return { error: SLOT_TAKEN };
+    if (error?.code === 'P0001' && error.message === 'dia_de_folga') return { error: DAY_OFF };
+    if (error?.code === 'P0001' && error.message === 'horario_bloqueado') return { error: SLOT_BLOCKED };
     console.error('createBooking', error);
     return { error: 'Não foi possível salvar o agendamento. Tente novamente.' };
   }

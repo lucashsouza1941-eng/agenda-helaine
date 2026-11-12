@@ -13,10 +13,11 @@ export function ServicesForm({ services }: { services: ServiceWithStatus[] }) {
     {services.map((s) => <fieldset key={s.id} className="service-row">
       <legend>{s.name}</legend>
       <label>Preço<input name={`price_${s.id}`} defaultValue={s.price === 'A definir' ? '' : s.price} maxLength={40} placeholder="Ex.: R$ 250 ou a partir de R$ 200" /></label>
-      <label>Duração<input name={`duration_${s.id}`} defaultValue={s.duration} maxLength={40} placeholder="Ex.: 3 a 4 horas" /></label>
+      <label>Duração (texto que a cliente lê)<input name={`duration_${s.id}`} defaultValue={s.duration} maxLength={40} placeholder="Ex.: 3 a 4 horas" /></label>
+      <label>Tempo reservado na agenda (horas)<input name={`hours_${s.id}`} defaultValue={String(s.minutes / 60).replace('.', ',')} inputMode="decimal" required maxLength={5} placeholder="Ex.: 4 ou 4,5" /></label>
       <label className="check"><input type="checkbox" name={`active_${s.id}`} defaultChecked={s.active} /> Mostrar no site</label>
     </fieldset>)}
-    <p className="muted small">Preço em branco aparece como “A definir”.</p>
+    <p className="muted small">Preço em branco aparece como “A definir”. O tempo reservado bloqueia a agenda: enquanto um atendimento não termina, nenhuma cliente consegue marcar outro. Mudar o tempo não altera agendamentos já feitos.</p>
     <Feedback state={state} />
     <button className="btn gold" disabled={pending}>{pending ? 'Salvando...' : 'Salvar serviços'}</button>
   </form>;

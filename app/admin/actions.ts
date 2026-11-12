@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
-import { bookingStatuses, formatDateBR, services, todaySP, type BookingStatus } from '@/lib/data';
+import { bookingStatuses, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, services, todaySP, type BookingStatus } from '@/lib/data';
 import { getTimeSlots, slotOptions } from '@/lib/settings';
 
 export type SignInState = { error: string; email: string };
@@ -99,8 +99,13 @@ export type SettingsState = { error: string; ok: string };
 
 /** Salva preço, duração e visibilidade de cada serviço. */
 export async function saveServices(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  // Tempo reservado: a Helaine digita em horas (aceita vírgula), o banco guarda em minutos.
+  const minutesOf = (id: string) => Math.round(Number(String(formData.get(`hours_${id}`) || '').replace(',', '.')) * 60);
+  const bad = services.find((s) => { const m = minutesOf(s.id); return !Number.isFinite(m) || m < MIN_SERVICE_MINUTES || m > MAX_SERVICE_MINUTES; });
+  if (bad) return { error: `Informe o tempo reservado de ${bad.name} em horas (de ${MIN_SERVICE_MINUTES / 60} a ${MAX_SERVICE_MINUTES / 60}). Ex.: 4 ou 4,5.`, ok: '' };
   const rows = services.map((s) => ({
     service_id: s.id,
+    duration_minutes: minutesOf(s.id),
     price: String(formData.get(`price_${s.id}`) || '').trim().slice(0, 40) || null,
     duration: String(formData.get(`duration_${s.id}`) || '').trim().slice(0, 40) || null,
     active: formData.get(`active_${s.id}`) === 'on',
@@ -109,7 +114,7 @@ export async function saveServices(_prev: SettingsState, formData: FormData): Pr
   if (!rows.some((r) => r.active)) return { error: 'Deixe pelo menos um serviço aparecendo no site.', ok: '' };
   const supabase = await createAuthClient();
   const { error } = await supabase.from('service_settings').upsert(rows, { onConflict: 'service_id' });
-  if (error) { console.error('saveServices', error); return { error: 'Não foi possível salvar. Confira se a migração 0005 foi rodada no Supabase.', ok: '' }; }
+  if (error) { console.error('saveServices', error); return { error: 'Não foi possível salvar. Confira se as migrações 0005 e 0006 foram rodadas no Supabase.', ok: '' }; }
   revalidatePath('/', 'layout');
   return { error: '', ok: 'Serviços salvos. O site já mostra os novos valores.' };
 }

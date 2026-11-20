@@ -4,6 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 // Renova a sessão do Supabase nas páginas do admin.
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  // O painel do tablet tem sessão própria (PIN): não usa o login do Supabase.
+  if (request.nextUrl.pathname.startsWith('/admin/tablet')) return response;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return response;
   const supabase = createServerClient(url, key, {

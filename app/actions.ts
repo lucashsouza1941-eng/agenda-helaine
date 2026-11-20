@@ -117,8 +117,9 @@ export async function cancelMyBooking(id: string): Promise<{ ok: true } | { erro
   if (error) { console.error('cancelMyBooking', error); return { error: 'Não foi possível cancelar. Tente novamente.' }; }
   if (!b) return { error: 'Agendamento não encontrado.' };
   if (b.status === 'Cancelado') return { ok: true };
+  if (b.status === 'Finalizado') return { error: 'Esse atendimento já foi finalizado.' };
   if (hoursUntil(b.date, b.time) < CANCEL_MIN_HOURS) return { error: `Faltam menos de ${CANCEL_MIN_HOURS} horas. Para cancelar, fale com a Helaine pelo WhatsApp.` };
-  const { error: upError } = await supabase.from('bookings').update({ status: 'Cancelado' }).eq('id', id).neq('status', 'Cancelado');
+  const { error: upError } = await supabase.from('bookings').update({ status: 'Cancelado' }).eq('id', id).in('status', ['Pendente', 'Confirmado']);
   if (upError) { console.error('cancelMyBooking', upError); return { error: 'Não foi possível cancelar. Tente novamente.' }; }
   return { ok: true };
 }

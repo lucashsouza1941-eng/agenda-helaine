@@ -139,3 +139,4 @@ footer{padding-top:var(--s7);padding-bottom:var(--s7);gap:var(--s5)}
   .section-head,.contact{gap:var(--s3)}
   .booking-item{gap:var(--s3)}
 }
+.quick{max-width:none}

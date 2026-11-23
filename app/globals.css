@@ -148,3 +148,14 @@
 @media(max-width:900px){.mural{column-count:2}}
 @media(max-width:520px){.mural{column-count:1}}
 .service-photo{height:auto;aspect-ratio:4/3}
+.conta{display:grid;gap:16px;max-width:560px}
+.conta-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.conta-tabs button{border:1px solid var(--line);background:white;border-radius:999px;padding:12px;font-weight:800;cursor:pointer}
+.conta-tabs button.active{background:var(--gold);border-color:#dfa30d}
+.conta .panel input{width:100%;font-weight:400}
+.conta .panel input:disabled{background:#f4eee7;color:var(--muted)}
+.conta .panel .small{margin:-6px 0 14px}
+.conta .form-ok{background:#ddf3df;color:#28723b;border-radius:12px;padding:10px 12px;font-size:13px;margin:0 0 12px}
+.conta-ola .actions{margin-top:14px}
+.conta-link{border:0;background:none;padding:0;color:var(--purple);font-weight:800;cursor:pointer;text-decoration:underline;font-size:inherit;justify-self:start}
+.promo-note a,.days-off-note a{color:var(--purple);font-weight:800;text-decoration:underline}

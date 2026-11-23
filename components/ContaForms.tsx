@@ -10,7 +10,7 @@ import { formatPhone, PIN_LENGTH, type Client } from '@/lib/cliente/rules';
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 const EMPTY: AccountState = { error: '', ok: '' };
 /** Para onde a cliente pode voltar depois de entrar (só páginas do próprio site). */
-const BACK_TO = ['/agendar', '/meus-agendamentos'];
+const BACK_TO = ['/agendar', '/meus-agendamentos', '/provador'];
 
 const pinProps = { inputMode: 'numeric' as const, pattern: `[0-9]{${PIN_LENGTH}}`, maxLength: PIN_LENGTH, autoComplete: 'off' };
 

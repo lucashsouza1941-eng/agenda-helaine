@@ -1,6 +1,6 @@
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { currentPromos, PROMO_COLUMNS, type Promotion } from '@/lib/promo';
-import { CARD_GRADIENTS, DEFAULT_CLOSING_TIME, formatDuration, todaySP, services as defaultServices, timeSlots as defaultTimeSlots, type Service, type ServiceCategory } from '@/lib/data';
+import { CARD_GRADIENTS, DEFAULT_CLOSING_TIME, formatDuration, SERVICE_PHOTOS, servicePhotoPath, todaySP, services as defaultServices, timeSlots as defaultTimeSlots, type Service, type ServiceCategory } from '@/lib/data';
 
 export type ServiceWithStatus = Service & { active: boolean };
 
@@ -26,7 +26,9 @@ function fromCatalog(r: CatalogRow, index: number): ServiceWithStatus {
     id: r.id, name: r.name, category: r.category, description: r.description,
     duration: r.duration_label || formatDuration(r.duration_minutes), minutes: r.duration_minutes,
     price: r.price || 'A definir', image: extra?.image ?? CARD_GRADIENTS[index % CARD_GRADIENTS.length],
-    photo: r.photo || undefined, photoAlt: extra?.photoAlt ?? r.name, photoPosition: extra?.photoPosition,
+    // Foto: a que o banco aponta, ou a que vem junto com o site para esse id.
+    photo: r.photo || (r.id in SERVICE_PHOTOS ? servicePhotoPath(r.id) : undefined),
+    photoAlt: extra?.photoAlt ?? `Exemplo de ${r.name}`, photoPosition: SERVICE_PHOTOS[r.id],
     active: r.active,
   };
 }

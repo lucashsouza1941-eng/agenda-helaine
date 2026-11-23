@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: { default: 'Helaine Tranças | Agendamento online', template: '%s | Helaine Tranças' },
   description,
   openGraph: { title: 'Helaine Tranças', description, siteName: 'Helaine Tranças', locale: 'pt_BR', type: 'website' },
+  // Ícone e nome do site quando instalado na tela de início do iPhone (o manifesto cobre o Android).
+  icons: { apple: '/icons/apple-touch-icon.png' },
+  appleWebApp: { capable: true, title: 'Helaine', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = { themeColor: '#4d135f' };

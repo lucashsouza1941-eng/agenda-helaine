@@ -140,3 +140,17 @@ footer{padding-top:var(--s7);padding-bottom:var(--s7);gap:var(--s5)}
   .booking-item{gap:var(--s3)}
 }
 .quick{max-width:none}
+
+/* ---------- Menu do topo: página atual marcada ---------- */
+.top nav a{position:relative;white-space:nowrap}
+.top nav a[aria-current=page]{color:var(--gold)}
+@media(min-width:901px){.top nav a[aria-current=page]:after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:3px;background:var(--gold);border-radius:2px}}
+@media(max-width:900px){
+  /* o menu rola para os lados: sem barra de rolagem, com as pontas esmaecidas para mostrar que continua */
+  .top nav{scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;padding:var(--s1) var(--gutter) var(--s2);margin:0 calc(-1*var(--gutter));width:calc(100% + 2*var(--gutter));
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 var(--gutter),#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,transparent,#000 var(--gutter),#000 calc(100% - 28px),transparent)}
+  .top nav::-webkit-scrollbar{display:none}
+  .top nav a{flex:none;padding:var(--s2) var(--s4);min-height:40px;display:inline-flex;align-items:center}
+  .top nav a[aria-current=page]{background:var(--gold);border-color:var(--gold);color:#2a0042;box-shadow:3px 3px 0 #2a0042}
+}
+.top nav{position:relative}

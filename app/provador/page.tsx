@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Shell } from '@/components/Shell';
 import { Provador } from '@/components/Provador';
 import { getActiveServices } from '@/lib/settings';
@@ -15,6 +16,8 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 export default async function Page() {
+  // Página escondida até a chave NEXT_PUBLIC_PROVADOR=on ser ligada: nem o endereço direto abre.
+  if (process.env.NEXT_PUBLIC_PROVADOR !== 'on') notFound();
   const client = await getCurrentClient();
   const ready = supabaseConfigured() && tryonConfigured();
   const [services, usage] = await Promise.all([getActiveServices(), client && ready ? getTryonUsage(client.id) : null]);

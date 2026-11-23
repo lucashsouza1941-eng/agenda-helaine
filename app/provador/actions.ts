@@ -31,7 +31,7 @@ async function referencePhoto(serviceId: string): Promise<Uint8Array | null> {
  * dentro do limite. A foto não é guardada em lugar nenhum: volta direto para o navegador.
  */
 export async function createTryon(_prev: TryonState, formData: FormData): Promise<TryonState> {
-  if (!supabaseConfigured() || !tryonConfigured()) return fail(OFF);
+  if (process.env.NEXT_PUBLIC_PROVADOR !== 'on' || !supabaseConfigured() || !tryonConfigured()) return fail(OFF);
   const client = await getCurrentClient();
   if (!client) return fail('Entre na sua conta para usar o provador.');
   if (formData.get('consent') !== 'on') return fail('Marque a caixinha de autorização para continuar.');

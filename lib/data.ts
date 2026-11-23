@@ -7,9 +7,9 @@ export type Service = { id:string; name:string; category:ServiceCategory; durati
 // Catálogo de reserva: vale enquanto a tabela `services` (migração 0008) não existir.
 // Depois dela, daqui só se aproveitam o gradiente e o enquadramento da foto de cada id.
 export const services: Service[] = [
-  {id:'box-braids',category:'tranca',name:'Box Braids',duration:'4 a 6 horas',minutes:360,price:'A definir',description:'Tranças tradicionais e versáteis, com acabamento profissional e orientação de cuidados. ',image:'linear-gradient(135deg,#34103f,#8d3f62 55%,#f0a01a)',photo:'/images/servicos/box-braids.jpg',photoAlt:'Mulher de costas com box braids longas até a cintura e argolas douradas',photoPosition:'50% 35%'},
-  {id:'nago',category:'tranca',name:'Nagô',duration:'2 a 4 horas',minutes:240,price:'A definir',description:'Tranças rente ao couro cabeludo com desenho e acabamento personalizado.',image:'linear-gradient(135deg,#27132f,#703151 55%,#c87322)',photo:'/images/servicos/nago.jpg',photoAlt:'Mulher de costas com tranças nagô rentes à cabeça, em fileiras até a nuca',photoPosition:'50% 30%'},
-  {id:'twist',category:'tranca',name:'Twist',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Visual leve, versátil e contemporâneo, com diferentes comprimentos.',image:'linear-gradient(135deg,#331743,#7f255f 55%,#e1a12a)',photo:'/images/servicos/twist.jpg',photoAlt:'Mulher de costas com twists longos, torcidos como corda',photoPosition:'45% 35%'},
+  {id:'box-braids',category:'tranca',name:'Box Braids',duration:'4 a 6 horas',minutes:360,price:'A definir',description:'Tranças tradicionais e versáteis, com acabamento profissional e orientação de cuidados. ',image:'linear-gradient(135deg,#34103f,#8d3f62 55%,#f0a01a)',photo:'/images/servicos/box-braids.jpg',photoPosition:'50% 22%'},
+  {id:'nago',category:'tranca',name:'Nagô',duration:'2 a 4 horas',minutes:240,price:'A definir',description:'Tranças rente ao couro cabeludo com desenho e acabamento personalizado.',image:'linear-gradient(135deg,#27132f,#703151 55%,#c87322)',photo:'/images/servicos/nago.jpg',photoPosition:'50% 22%'},
+  {id:'twist',category:'tranca',name:'Twist',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Visual leve, versátil e contemporâneo, com diferentes comprimentos.',image:'linear-gradient(135deg,#331743,#7f255f 55%,#e1a12a)',photo:'/images/servicos/twist.jpg',photoPosition:'50% 22%'},
   {id:'chanel',category:'tranca',name:'Tranças Chanel',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Elegância, praticidade e identidade em um comprimento marcante.',image:'linear-gradient(135deg,#251029,#5b1e56 55%,#b8761f)',photo:'/images/servicos/chanel.jpg',photoAlt:'Mulher de costas com tranças em corte chanel, na altura do queixo',photoPosition:'50% 35%'},
   {id:'manutencao',category:'outro',name:'Manutenção',duration:'1 a 3 horas',minutes:180,price:'A definir',description:'Cuidado para prolongar a beleza e a durabilidade das suas tranças.',image:'linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)',photo:'/images/servicos/manutencao.jpg',photoAlt:'Mãos de uma trancista refazendo a raiz das tranças com um pente de cabo fino',photoPosition:'50% 60%'}
 ];
@@ -75,3 +75,18 @@ export function freeSlots(o:{ slots:string[]; minutes:number; busy:BusyInterval[
   const free = open.filter(t=>!o.isPast(t));
   return { free, reason: free.length ? null : open.length ? 'past' : 'full' };
 }
+
+/**
+ * Serviços que têm foto em public/images/servicos/<id>.jpg, com o enquadramento de cada uma
+ * (object-position). Vale quando o banco não aponta outra foto para o serviço.
+ */
+const PORTRAIT = '50% 22%'; // retratos quadrados: o penteado fica no alto da foto
+export const SERVICE_PHOTOS: Record<string,string> = {
+  'box-braids':PORTRAIT, 'knotless-braids':PORTRAIT, 'fulani-braids':PORTRAIT, twist:PORTRAIT, nago:PORTRAIT, boxeadora:PORTRAIT,
+  'nago-coracao':PORTRAIT, 'nago-coroa':PORTRAIT, 'nago-curvas-laterais':PORTRAIT, 'nago-espiral':PORTRAIT, 'nago-estrela':PORTRAIT,
+  'nago-folhas':PORTRAIT, 'nago-geometrico':PORTRAIT, 'nago-teia':PORTRAIT, 'nago-tribal':PORTRAIT, 'nago-zig-zag':PORTRAIT,
+  'corte-reto':PORTRAIT, 'corte-repicado':PORTRAIT, 'corte-camadas':PORTRAIT, 'corte-redondo-cachos':PORTRAIT, 'corte-chanel':PORTRAIT,
+  'corte-long-bob':PORTRAIT, 'corte-franja':PORTRAIT, 'corte-pixie':PORTRAIT, 'corte-undercut':PORTRAIT, 'corte-big-chop':PORTRAIT,
+  chanel:'50% 35%', manutencao:'50% 60%',
+};
+export const servicePhotoPath = (id:string) => `/images/servicos/${id}.jpg`;

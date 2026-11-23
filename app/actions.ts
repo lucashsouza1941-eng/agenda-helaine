@@ -7,6 +7,7 @@ import { getActiveServices, getClosingTime, getCurrentPromotions, getTimeSlots, 
 import { promoFor, promoSnapshot } from '@/lib/promo';
 import { AUTHOR_MAX, CAPTION_MAX, MAX_PHOTO_BYTES, oneLine, photoProblem } from '@/lib/mural';
 import { savePhoto } from '@/lib/muralStore';
+import { getCurrentClient } from '@/lib/cliente/session';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
@@ -92,12 +93,15 @@ export async function createBooking(input: {
   // A promoção é decidida aqui no servidor, pela data e pelo serviço: o navegador não escolhe preço.
   const promo = promoFor(await getCurrentPromotions(), service.id, input.date);
   const full = { ...row, duration_minutes: service.minutes, service_name: service.name, notes: notes || null };
-  const attempts = [
+  const variants = [
     ...(promo ? [{ ...full, promo_title: promoSnapshot(promo) }] : []),
     full,
     { ...row, duration_minutes: service.minutes },
     row,
   ];
+  // Cliente logada: o agendamento fica ligado ao cadastro dela (migração 0011).
+  const client = await getCurrentClient();
+  const attempts = client ? [{ ...variants[0], client_id: client.id }, ...variants] : variants;
   let { data, error } = await supabase.from('bookings').insert(attempts[0]).select('id').single();
   for (let i = 1; error && isMissingColumn(error) && i < attempts.length; i++) {
     ({ data, error } = await supabase.from('bookings').insert(attempts[i]).select('id').single());
@@ -113,12 +117,26 @@ export async function createBooking(input: {
   return { id: data.id };
 }
 
-/** Agendamentos feitos neste aparelho (a cliente guarda os IDs no navegador). */
+/**
+ * Agendamentos da cliente: os feitos neste aparelho (IDs guardados no navegador) e, se ela
+ * estiver logada, todos os do cadastro dela. Os deste aparelho passam a pertencer ao cadastro.
+ */
 export async function getMyBookings(ids: string[]): Promise<PublicBooking[]> {
   const valid = ids.filter((id) => UUID.test(id)).slice(0, 50);
-  if (!supabaseConfigured() || valid.length === 0) return [];
-  const query = (cols: string) => createServiceClient().from('bookings').select(cols).in('id', valid)
-    .order('date', { ascending: false }).order('time', { ascending: false }).returns<PublicBooking[]>();
+  if (!supabaseConfigured()) return [];
+  const client = await getCurrentClient();
+  if (!client && valid.length === 0) return [];
+  const supabase = createServiceClient();
+  if (client && valid.length > 0) {
+    const { error } = await supabase.from('bookings').update({ client_id: client.id }).in('id', valid).is('client_id', null);
+    if (error) console.error('getMyBookings', error);
+  }
+  const query = (cols: string) => {
+    const q = supabase.from('bookings').select(cols);
+    const mine = !client ? q.in('id', valid)
+      : valid.length > 0 ? q.or(`client_id.eq.${client.id},id.in.(${valid.join(',')})`) : q.eq('client_id', client.id);
+    return mine.order('date', { ascending: false }).order('time', { ascending: false }).limit(100).returns<PublicBooking[]>();
+  };
   const columnSets = ['id, service_id, service_name, promo_title, date, time, status', 'id, service_id, service_name, date, time, status', 'id, service_id, date, time, status'];
   let { data, error } = await query(columnSets[0]);
   for (let i = 1; error && isMissingColumn(error) && i < columnSets.length; i++) ({ data, error } = await query(columnSets[i]));

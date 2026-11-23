@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
+import { createAuthClient, createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { bookingStatuses, CATEGORY_LABELS, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, slugify, todaySP, type BookingStatus, type ServiceCategory } from '@/lib/data';
 import { closingOptions, getTimeSlots, slotOptions } from '@/lib/settings';
 import { AUTHOR_MAX, CAPTION_MAX, MAX_PHOTO_BYTES, oneLine, photoProblem } from '@/lib/mural';
@@ -267,4 +267,12 @@ export async function addMuralPhoto(_prev: AdminMuralState, formData: FormData):
   if (!result.ok) return { error: result.reason === 'migracao' ? 'Rode a migração 0010_mural.sql no Supabase para usar o mural.' : 'Não foi possível publicar. Confira se a migração 0010 foi rodada.', ok: '' };
   revalidatePath('/', 'layout');
   return { error: '', ok: 'Foto publicada na galeria.' };
+}
+
+/** Cliente esqueceu a senha: o admin apaga a senha e o bloqueio. Ela volta a entrar com telefone + e-mail e cria outra. */
+export async function resetClientPin(id: string) {
+  if (!PHOTO_ID.test(id) || !(await isAdminSession())) return;
+  const { error } = await createServiceClient().from('clients').update({ pin_hash: null, failed_logins: 0, locked_until: null }).eq('id', id);
+  if (error) console.error('resetClientPin', error);
+  revalidatePath('/admin');
 }

@@ -174,6 +174,11 @@ describe('lista do dia', () => {
     expect(render([booking(2, '11:00', 'Confirmado')])).toContain('<div class="serv">Nagô</div>');
   });
 
+  it('mostra a promoção do agendamento antes da observação', () => {
+    const html = render([booking(2, '11:00', 'Confirmado', { promo_title: 'Novembro Negro — R$ 300,00', notes: 'Cabelo curto.' })]);
+    expect(html).toContain('<div class="obs">Promoção: Novembro Negro — R$ 300,00 · Cabelo curto.</div>');
+  });
+
   it('observação maliciosa é escapada', () => {
     const html = render([booking(2, '11:00', 'Confirmado', { notes: '<script>alert(1)</script>' })]);
     expect(html).not.toContain('<script>alert');

@@ -3,7 +3,8 @@ import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
 import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, NOTES_MAX, services as defaultServices, slotConflict, todaySP, toMinutes, type Booking, type BusyInterval } from '@/lib/data';
-import { getActiveServices, getClosingTime, getTimeSlots, isMissingColumn } from '@/lib/settings';
+import { getActiveServices, getClosingTime, getCurrentPromotions, getTimeSlots, isMissingColumn } from '@/lib/settings';
+import { promoFor, promoSnapshot } from '@/lib/promo';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
@@ -15,7 +16,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isValidDate = (d: string) => DATE.test(d) && !Number.isNaN(Date.parse(d + 'T00:00:00Z')) && d >= todaySP();
 
-export type PublicBooking = Pick<Booking, 'id' | 'service_id' | 'service_name' | 'date' | 'time' | 'status'>;
+export type PublicBooking = Pick<Booking, 'id' | 'service_id' | 'service_name' | 'promo_title' | 'date' | 'time' | 'status'>;
 
 type BusyRow = { time: string; service_id: string; duration_minutes?: number | null };
 
@@ -86,8 +87,12 @@ export async function createBooking(input: {
   const supabase = createServiceClient();
   const row = { service_id: input.serviceId, date: input.date, time: input.time, name, phone, email: email || null };
   // Do mais completo para o mais antigo: cada migração pendente (0008, depois 0006) tira colunas.
+  // A promoção é decidida aqui no servidor, pela data e pelo serviço: o navegador não escolhe preço.
+  const promo = promoFor(await getCurrentPromotions(), service.id, input.date);
+  const full = { ...row, duration_minutes: service.minutes, service_name: service.name, notes: notes || null };
   const attempts = [
-    { ...row, duration_minutes: service.minutes, service_name: service.name, notes: notes || null },
+    ...(promo ? [{ ...full, promo_title: promoSnapshot(promo) }] : []),
+    full,
     { ...row, duration_minutes: service.minutes },
     row,
   ];
@@ -112,8 +117,9 @@ export async function getMyBookings(ids: string[]): Promise<PublicBooking[]> {
   if (!supabaseConfigured() || valid.length === 0) return [];
   const query = (cols: string) => createServiceClient().from('bookings').select(cols).in('id', valid)
     .order('date', { ascending: false }).order('time', { ascending: false }).returns<PublicBooking[]>();
-  let { data, error } = await query('id, service_id, service_name, date, time, status');
-  if (error && isMissingColumn(error)) ({ data, error } = await query('id, service_id, date, time, status'));
+  const columnSets = ['id, service_id, service_name, promo_title, date, time, status', 'id, service_id, service_name, date, time, status', 'id, service_id, date, time, status'];
+  let { data, error } = await query(columnSets[0]);
+  for (let i = 1; error && isMissingColumn(error) && i < columnSets.length; i++) ({ data, error } = await query(columnSets[i]));
   if (error || !data) { console.error('getMyBookings', error); return []; }
   return data;
 }

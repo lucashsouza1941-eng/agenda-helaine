@@ -19,7 +19,7 @@ export const halfHourSlots = (from:string, to:string) => { const out:string[]=[]
 export const timeSlots=halfHourSlots('08:00','20:00');
 export const bookingStatuses = ['Pendente', 'Confirmado', 'Finalizado', 'Cancelado'] as const;
 export type BookingStatus = typeof bookingStatuses[number];
-export type Booking = { id:string; service_id:string; service_name?:string|null; notes?:string|null; date:string; time:string; duration_minutes?:number; name:string; phone:string; email:string|null; status:BookingStatus; created_at:string };
+export type Booking = { id:string; service_id:string; service_name?:string|null; notes?:string|null; promo_title?:string|null; date:string; time:string; duration_minutes?:number; name:string; phone:string; email:string|null; status:BookingStatus; created_at:string };
 export const serviceName = (id:string) => services.find(s=>s.id===id)?.name ?? id;
 /** Nome do serviço de um agendamento: o gravado no dia, ou o do catálogo de reserva. */
 export const bookingServiceName = (b:{service_id:string; service_name?:string|null}) => b.service_name || serviceName(b.service_id);

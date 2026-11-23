@@ -3,7 +3,7 @@ import { isMissingColumn } from '@/lib/settings';
 import type { BookingStatus } from '@/lib/data';
 
 export type TabletBooking = {
-  id: string; service_id: string; service_name: string | null; notes: string | null; date: string; time: string; name: string; phone: string; email: string | null;
+  id: string; service_id: string; service_name: string | null; notes: string | null; promo_title: string | null; date: string; time: string; name: string; phone: string; email: string | null;
   status: BookingStatus; duration_minutes: number | null; reminder_sent_at: string | null;
 };
 
@@ -28,14 +28,14 @@ export class TabletError extends Error {
 }
 
 const COLUMNS = 'id, service_id, date, time, name, phone, email, status, duration_minutes';
-type Optional = 'reminder_sent_at' | 'duration_minutes' | 'service_name' | 'notes';
+type Optional = 'reminder_sent_at' | 'duration_minutes' | 'service_name' | 'notes' | 'promo_title';
 type Row = Omit<TabletBooking, Optional> & Partial<Pick<TabletBooking, Optional>>;
 const toBooking = (r: Row): TabletBooking => ({
   ...r, duration_minutes: r.duration_minutes ?? null, reminder_sent_at: r.reminder_sent_at ?? null,
-  service_name: r.service_name ?? null, notes: r.notes ?? null,
+  service_name: r.service_name ?? null, notes: r.notes ?? null, promo_title: r.promo_title ?? null,
 });
-// Do mais completo para o mais antigo: cada migração pendente (0008, depois 0007) tira colunas.
-const COLUMN_SETS = [`${COLUMNS}, reminder_sent_at, service_name, notes`, `${COLUMNS}, reminder_sent_at`, COLUMNS];
+// Do mais completo para o mais antigo: cada migração pendente (0009, 0008, depois 0007) tira colunas.
+const COLUMN_SETS = [`${COLUMNS}, reminder_sent_at, service_name, notes, promo_title`, `${COLUMNS}, reminder_sent_at, service_name, notes`, `${COLUMNS}, reminder_sent_at`, COLUMNS];
 
 /** Tenta a consulta com cada conjunto de colunas até um existir no banco. */
 async function withFallback<T>(run: (cols: string) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>) {

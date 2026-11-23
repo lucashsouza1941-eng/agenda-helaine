@@ -3,6 +3,7 @@ import '@fontsource/anton/latin-400.css';
 import '@fontsource/dm-serif-display/latin-400.css';
 import './globals.css';
 import './street.css';
+import './spacing.css';
 import { THEME_SCRIPT } from '@/lib/theme';
 
 const description = 'Tranças com atendimento cuidadoso. Escolha o serviço, a data e o horário e agende online, sem precisar criar conta.';

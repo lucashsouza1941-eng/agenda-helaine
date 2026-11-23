@@ -1,0 +1,141 @@
+/* Padrão de espaçamento do site. Carrega por último e alinha tudo a uma única régua,
+   para que margens, respiros e distâncias sejam iguais em todas as páginas.
+
+   Régua (múltiplos de 4):
+     --s1 4   detalhe (ícone e texto)
+     --s2 8   entre rótulo e campo, itens colados
+     --s3 12  entre itens de uma lista compacta
+     --s4 16  entre cartões; respiro de cartão pequeno
+     --s5 24  respiro de painel; entre blocos dentro de uma seção
+     --s6 32  entre o título da página e o conteúdo
+     --s7 48  entre seções (celular)
+     --s8 72  entre seções (computador)
+   --gutter é a margem lateral: a mesma no topo, na capa, nas seções e no rodapé. */
+:root{
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;--s8:72px;
+  --gutter:24px;--content:1160px;
+  --band:max(var(--gutter),calc((100vw - var(--content))/2));
+  --section:var(--s8);--pad:var(--s5);
+}
+@media(max-width:900px){:root{--section:var(--s7)}}
+@media(max-width:600px){:root{--gutter:16px;--pad:var(--s4)}}
+
+/* ---------- Margem lateral: uma só para o site todo ---------- */
+.section,.page{width:min(var(--content),calc(100% - 2*var(--gutter)));padding:var(--section) 0}
+.top,.hero,.story,footer{padding-left:var(--band);padding-right:var(--band)}
+.quick,.install-app{width:min(var(--content),calc(100% - 2*var(--gutter)));margin-left:auto;margin-right:auto}
+
+/* ---------- Ritmo vertical entre faixas ---------- */
+.hero{padding-top:var(--section);padding-bottom:calc(var(--section) + var(--s4))}
+.story{padding-top:var(--section);padding-bottom:var(--section);margin-top:0;gap:var(--s7)}
+footer{padding-top:var(--s7);padding-bottom:var(--s7);gap:var(--s5)}
+.quick{margin-top:var(--s7);gap:var(--s4)}
+.install-app{margin-top:var(--s5)}
+.promo-section{padding-bottom:0}
+.top{gap:var(--s2) var(--s5)}
+.top nav{gap:var(--s5)}
+
+/* ---------- Títulos: etiqueta, título, texto ---------- */
+.page-title{margin-bottom:var(--s6)}
+.page-title h1,.hero h1{margin:var(--s4) 0 var(--s4)}
+.page-title p{margin:0}
+.page-title:after{margin-top:var(--s5)}
+.section-head{margin-bottom:var(--s5);gap:var(--s5)}
+.section h2,.story h2,.contact h2{margin:var(--s3) 0 var(--s3)}
+.section-head h2{margin-bottom:0}
+.hero p{margin:0 0 var(--s5)}
+.hero p.eyebrow{margin:0}
+.story p,.contact p{margin:0}
+.actions{gap:var(--s3);margin-top:var(--s5)}
+.contact{gap:var(--s6)}
+.service-group{margin-bottom:var(--s7)}
+.service-group:last-of-type{margin-bottom:0}
+.service-group h2{margin:0 0 var(--s4)}
+.photo-note{margin:var(--s3) 0 0}
+.mural-send{margin-top:var(--s7)}
+
+/* ---------- Grades: a mesma distância entre cartões ---------- */
+.cards,.gallery,.booking-grid,.promo-list,.booking-list,.provador-grid,.conta{gap:var(--s4)}
+.mural{column-gap:var(--s4)}
+.mural-item{margin:0 0 var(--s4)}
+.slots{gap:var(--s2)}
+.style-grid{gap:var(--s3);margin-bottom:var(--s2)}
+.conta-tabs{gap:var(--s2)}
+
+/* ---------- Cartões e painéis: o mesmo respiro por dentro ---------- */
+.panel,.empty,.new-booking,.promo-card,.quote,.booking-item,.install-app{padding:var(--pad)}
+.empty{padding:var(--s7) var(--pad)}
+.empty h2{margin:0 0 var(--s2)}
+.empty p{margin:0 0 var(--s5)}
+.service-card>div:last-child{padding:var(--s4)}
+.service-card h3{margin:0 0 var(--s2)}
+.service-card p{margin:0 0 var(--s3)}
+.meta{margin-bottom:var(--s3);gap:var(--s2)}
+.booking-item{gap:var(--s4)}
+.promo-card{gap:var(--s3)}
+.promo-meta{gap:var(--s3)}
+.new-booking{margin-bottom:var(--s5)}
+.new-booking h2{margin:0 0 var(--s2)}
+.new-booking p{margin:0 0 var(--s3)}
+.mural-item figcaption{padding:var(--s3) var(--s4)}
+.summary-card{gap:var(--s2);padding:var(--s4);margin-bottom:var(--s4)}
+.service-detail{gap:var(--s2);padding:var(--s4);margin-top:0}
+.style-card b{padding:var(--s2)}
+
+/* ---------- Formulários: o mesmo passo entre campos ---------- */
+.panel h2{margin:0 0 var(--s4)}
+.provador .panel h2{margin-top:var(--s5)}
+.provador .panel h2:first-of-type,.provador-result h2{margin-top:0}
+.panel label,.mural-form label,.login label{gap:var(--s2);margin:0 0 var(--s4)}
+.mural-form,.login{gap:0}
+.panel input,.panel select,.panel textarea,.service-select,.mural-form input,.login input,.conta .panel input{padding:var(--s3) var(--s4)}
+.slot,.conta-tabs button{padding:var(--s3)}
+/* avisos e mensagens: sempre o mesmo respiro e a mesma distância do campo seguinte */
+.form-error,.form-ok,.promo-note.on,.conta .form-ok,.mural-form .form-ok,.mural-form .form-error{padding:var(--s3) var(--s4);margin:0 0 var(--s4)}
+.promo-note,.days-off-note,.panel .small,.conta .panel .small{margin:0 0 var(--s4)}
+.panel label + .days-off-note,.panel label + .small,.conta .panel label + .small{margin-top:calc(-1*var(--s2))}
+.panel>.small:last-child,.panel>.muted:last-child,.mural-form>.small:last-child{margin:var(--s3) 0 0}
+.panel>*:last-child{margin-bottom:0}
+.captcha{margin-bottom:var(--s4)}
+.provador-preview{margin:0 0 var(--s4)}
+.provador-image{margin-bottom:var(--s3)}
+.provador-result .actions{margin:var(--s4) 0}
+.conta-ola .actions{margin-top:var(--s4)}
+.booking-item .promo-note.on,.booking-item .form-ok,.booking-item .form-error{margin:var(--s2) 0 0;padding:var(--s2) var(--s3)}
+.whatsapp-link,.cancel-link{margin:var(--s2) 0 0 var(--s3)}
+.cancel-note{margin-top:var(--s2)}
+.status{margin-top:var(--s2)}
+
+/* ---------- Botões ---------- */
+.btn{min-height:48px;padding:0 var(--s5)}
+.btn.ghost-dark{min-height:48px}
+
+/* ---------- Painel da Helaine: mesma régua ---------- */
+.admin-main{padding:var(--s6)}
+.admin-card{padding:var(--pad)}
+.admin-grid,.stats{gap:var(--s4)}
+.stats{margin:var(--s5) 0}
+.stats>div{padding:var(--s4)}
+.admin-card h2{margin:0 0 var(--s3)}
+.admin-card h3{margin:var(--s5) 0 var(--s3)}
+.admin-card>.muted{margin:0 0 var(--s4)}
+.row{gap:var(--s3);padding:var(--s3) 0}
+.login{margin:var(--s7) auto}
+
+@media(max-width:900px){
+  .hero{padding-top:var(--s6);padding-bottom:calc(var(--section) + var(--s4))}
+  .hero-art{margin-bottom:var(--s4)}
+  .quick{margin:var(--s6) auto 0}
+  .story{gap:var(--s6)}
+  .top{padding-top:var(--s3);padding-bottom:var(--s2)}
+  .top nav{gap:var(--s2)}
+  .top nav a{padding:var(--s2) var(--s3)}
+}
+@media(max-width:600px){
+  .section,.page{width:min(var(--content),calc(100% - 2*var(--gutter)));padding:var(--section) 0}
+  .story{padding:var(--section) var(--gutter)}
+  .quick{gap:var(--s3)}
+  .admin-main{padding:var(--s4)}
+  .section-head,.contact{gap:var(--s3)}
+  .booking-item{gap:var(--s3)}
+}

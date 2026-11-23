@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { createAuthClient, createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { bookingStatuses, CATEGORY_LABELS, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, slugify, todaySP, type BookingStatus, type ServiceCategory } from '@/lib/data';
 import { closingOptions, getTimeSlots, slotOptions } from '@/lib/settings';
+import { TRYON_EXTRA_MAX, TRYON_GRANT } from '@/lib/provador/rules';
 import { AUTHOR_MAX, CAPTION_MAX, MAX_PHOTO_BYTES, oneLine, photoProblem } from '@/lib/mural';
 import { approvePhoto, deletePhoto, savePhoto } from '@/lib/muralStore';
 
@@ -274,5 +275,16 @@ export async function resetClientPin(id: string) {
   if (!PHOTO_ID.test(id) || !(await isAdminSession())) return;
   const { error } = await createServiceClient().from('clients').update({ pin_hash: null, failed_logins: 0, locked_until: null }).eq('id', id);
   if (error) console.error('resetClientPin', error);
+  revalidatePath('/admin');
+}
+
+/** Libera mais fotos no provador de tranças para uma cliente (cada foto gerada custa dinheiro). */
+export async function grantTryons(id: string) {
+  if (!PHOTO_ID.test(id) || !(await isAdminSession())) return;
+  const supabase = createServiceClient();
+  const { data, error } = await supabase.from('clients').select('tryon_extra').eq('id', id).maybeSingle();
+  if (error || !data) { if (error) console.error('grantTryons', error); return; }
+  const { error: upError } = await supabase.from('clients').update({ tryon_extra: Math.min(TRYON_EXTRA_MAX, (data.tryon_extra ?? 0) + TRYON_GRANT) }).eq('id', id);
+  if (upError) console.error('grantTryons', upError);
   revalidatePath('/admin');
 }

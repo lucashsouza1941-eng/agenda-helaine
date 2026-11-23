@@ -46,9 +46,11 @@ export function ContaEntrar({ backTo }: { backTo: string }) {
   const router = useRouter();
   const [tab, setTab] = useState<'cadastro' | 'entrar'>('cadastro');
   const [noPin, setNoPin] = useState(false);
-  const done = () => { if (BACK_TO.includes(backTo)) router.push(backTo); else router.refresh(); };
-  const signup = useAccountForm(registerClient, { captcha: true, onOk: done });
-  const login = useAccountForm(loginClient, { captcha: true, onOk: done });
+  // Depois de entrar, a cliente segue direto para o que veio fazer: quem acabou de se
+  // cadastrar vai agendar; quem já tinha cadastro vai ver os agendamentos.
+  const goTo = (fallback: string) => () => router.push(BACK_TO.includes(backTo) ? backTo : fallback);
+  const signup = useAccountForm(registerClient, { captcha: true, onOk: goTo('/agendar') });
+  const login = useAccountForm(loginClient, { captcha: true, onOk: goTo('/meus-agendamentos') });
 
   return <div className="conta">
     <div className="conta-tabs" role="tablist">

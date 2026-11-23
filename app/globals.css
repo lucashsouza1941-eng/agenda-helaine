@@ -124,3 +124,26 @@
 .row.ended{opacity:.55}
 @media(max-width:900px){.promo-list{grid-template-columns:1fr}}
 @media(max-width:600px){.promo-form{grid-template-columns:1fr}}
+.mural{column-count:3;column-gap:14px}
+.mural-item{break-inside:avoid;margin:0 0 14px;background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.mural-item img{display:block;width:100%;height:auto;background:#eadfd3}
+.mural-item figcaption{padding:10px 14px 12px;font-size:14px}
+.mural-item small{color:var(--muted)}
+.mural-send{margin-top:34px;max-width:560px}
+.mural-form{display:grid;gap:12px}
+.mural-form label{display:grid;gap:6px;font-size:12px;font-weight:800;margin:0}
+.mural-form label.check{display:flex;gap:8px;align-items:flex-start;font-weight:600;line-height:1.4}
+.mural-form label.check input{margin-top:2px}
+.mural-form input[type=text],.mural-form input:not([type]),.mural-form input[type=file]{border:1px solid var(--line);background:white;border-radius:12px;padding:11px 12px;font:inherit;font-weight:400;width:100%}
+.mural-form .form-ok{background:#ddf3df;color:#28723b;border-radius:12px;padding:10px 12px;font-size:13px;margin:0}
+.mural-form .form-error{margin:0}
+.mural-preview{max-width:100%;max-height:260px;border-radius:14px;border:1px solid var(--line);justify-self:start}
+.mural-admin{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:8px}
+.mural-admin figure{margin:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;display:grid;align-content:start}
+.mural-admin img,.mural-admin .no-img{width:100%;height:170px;object-fit:cover;display:grid;place-items:center;background:#f1ece6;color:var(--muted);font-size:12px}
+.mural-admin figcaption{padding:8px 10px 0;font-size:13px}
+.mural-admin small{display:block;color:var(--muted);font-size:11px}
+.mural-admin .row-actions{padding:8px 10px 10px;justify-content:flex-start}
+.admin-card h3{font-size:15px;margin:18px 0 8px}
+@media(max-width:900px){.mural{column-count:2}}
+@media(max-width:520px){.mural{column-count:1}}

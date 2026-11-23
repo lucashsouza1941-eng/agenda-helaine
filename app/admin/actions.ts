@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
 import { bookingStatuses, CATEGORY_LABELS, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, slugify, todaySP, type BookingStatus, type ServiceCategory } from '@/lib/data';
 import { closingOptions, getTimeSlots, slotOptions } from '@/lib/settings';
+import { AUTHOR_MAX, CAPTION_MAX, MAX_PHOTO_BYTES, oneLine, photoProblem } from '@/lib/mural';
+import { approvePhoto, deletePhoto, savePhoto } from '@/lib/muralStore';
 
 export type SignInState = { error: string; email: string };
 
@@ -222,4 +224,47 @@ export async function deletePromotion(id: string) {
   const { error } = await supabase.from('promotions').delete().eq('id', id);
   if (error) console.error('deletePromotion', error);
   revalidatePath('/', 'layout');
+}
+
+/** Confere se quem chamou é um admin logado (as ações do mural usam a service role, que ignora o RLS). */
+async function isAdminSession(): Promise<boolean> {
+  if (!supabaseConfigured()) return false;
+  const supabase = await createAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data } = await supabase.from('admins').select('user_id').eq('user_id', user.id).maybeSingle();
+  return Boolean(data);
+}
+
+const PHOTO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Aprova uma foto enviada por cliente: ela passa a aparecer na galeria. */
+export async function approveMuralPhoto(id: string) {
+  if (!PHOTO_ID.test(id) || !(await isAdminSession())) return;
+  await approvePhoto(id);
+  revalidatePath('/', 'layout');
+}
+
+/** Recusa uma foto pendente ou tira uma foto da galeria. A foto é apagada. */
+export async function deleteMuralPhoto(id: string) {
+  if (!PHOTO_ID.test(id) || !(await isAdminSession())) return;
+  await deletePhoto(id);
+  revalidatePath('/', 'layout');
+}
+
+export type AdminMuralState = { error: string; ok: string };
+
+/** O admin publica uma foto direto na galeria, sem passar pela fila. */
+export async function addMuralPhoto(_prev: AdminMuralState, formData: FormData): Promise<AdminMuralState> {
+  if (!(await isAdminSession())) return { error: 'Entre no painel de novo para publicar.', ok: '' };
+  const file = formData.get('photo');
+  if (!(file instanceof File) || file.size === 0) return { error: 'Escolha uma foto.', ok: '' };
+  if (file.size > MAX_PHOTO_BYTES) return { error: 'A foto ficou grande demais. Tente outra foto.', ok: '' };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const problem = photoProblem(bytes);
+  if (problem) return { error: problem, ok: '' };
+  const result = await savePhoto({ bytes, caption: oneLine(formData.get('caption'), CAPTION_MAX), author: oneLine(formData.get('author'), AUTHOR_MAX), source: 'admin' });
+  if (!result.ok) return { error: result.reason === 'migracao' ? 'Rode a migração 0010_mural.sql no Supabase para usar o mural.' : 'Não foi possível publicar. Confira se a migração 0010 foi rodada.', ok: '' };
+  revalidatePath('/', 'layout');
+  return { error: '', ok: 'Foto publicada na galeria.' };
 }

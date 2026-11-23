@@ -5,6 +5,8 @@ import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
 import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, NOTES_MAX, services as defaultServices, slotConflict, todaySP, toMinutes, type Booking, type BusyInterval } from '@/lib/data';
 import { getActiveServices, getClosingTime, getCurrentPromotions, getTimeSlots, isMissingColumn } from '@/lib/settings';
 import { promoFor, promoSnapshot } from '@/lib/promo';
+import { AUTHOR_MAX, CAPTION_MAX, MAX_PHOTO_BYTES, oneLine, photoProblem } from '@/lib/mural';
+import { savePhoto } from '@/lib/muralStore';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
 const DAY_OFF = 'A Helaine não atende nesse dia. Escolha outra data, por favor.';
@@ -138,4 +140,33 @@ export async function cancelMyBooking(id: string): Promise<{ ok: true } | { erro
   const { error: upError } = await supabase.from('bookings').update({ status: 'Cancelado' }).eq('id', id).in('status', ['Pendente', 'Confirmado']);
   if (upError) { console.error('cancelMyBooking', upError); return { error: 'Não foi possível cancelar. Tente novamente.' }; }
   return { ok: true };
+}
+
+export type MuralState = { error: string; ok: string };
+
+/** Lê e confere o arquivo de foto de um formulário. */
+async function readPhoto(formData: FormData): Promise<{ bytes: Uint8Array } | { error: string }> {
+  const file = formData.get('photo');
+  if (!(file instanceof File) || file.size === 0) return { error: 'Escolha uma foto.' };
+  if (file.size > MAX_PHOTO_BYTES) return { error: 'A foto ficou grande demais. Tente outra foto.' };
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const problem = photoProblem(bytes);
+  return problem ? { error: problem } : { bytes };
+}
+
+/** A cliente envia uma foto para o mural. Ela só aparece no site depois que a Helaine aprovar. */
+export async function submitMuralPhoto(_prev: MuralState, formData: FormData): Promise<MuralState> {
+  if (!supabaseConfigured()) return { error: NOT_CONFIGURED, ok: '' };
+  if (formData.get('consent') !== 'on') return { error: 'Marque a caixinha de autorização para enviar a foto.', ok: '' };
+  const photo = await readPhoto(formData);
+  if ('error' in photo) return { error: photo.error, ok: '' };
+  if (turnstileConfigured()) {
+    const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim();
+    if (!(await verifyTurnstile(String(formData.get('captcha') ?? ''), ip))) return { error: CAPTCHA, ok: '' };
+  }
+  const result = await savePhoto({ bytes: photo.bytes, caption: oneLine(formData.get('caption'), CAPTION_MAX), author: oneLine(formData.get('author'), AUTHOR_MAX), source: 'cliente' });
+  if (result.ok) return { error: '', ok: 'Foto enviada! Ela aparece na galeria depois que a Helaine aprovar.' };
+  if (result.reason === 'fila') return { error: 'Recebemos muitas fotos e a Helaine ainda está olhando. Tente de novo em alguns dias.', ok: '' };
+  if (result.reason === 'migracao') return { error: 'O mural ainda não está ligado. Tente mais tarde.', ok: '' };
+  return { error: 'Não foi possível enviar a foto. Tente novamente.', ok: '' };
 }

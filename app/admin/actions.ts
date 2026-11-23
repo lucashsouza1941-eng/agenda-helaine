@@ -2,7 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createAuthClient, supabaseConfigured } from '@/lib/supabase/server';
-import { bookingStatuses, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, services, todaySP, type BookingStatus } from '@/lib/data';
+import { bookingStatuses, CATEGORY_LABELS, formatDateBR, MAX_SERVICE_MINUTES, MIN_SERVICE_MINUTES, slugify, todaySP, type BookingStatus, type ServiceCategory } from '@/lib/data';
 import { closingOptions, getTimeSlots, slotOptions } from '@/lib/settings';
 
 export type SignInState = { error: string; email: string };
@@ -97,26 +97,67 @@ export async function removeBlockedSlot(date: string, time: string) {
 
 export type SettingsState = { error: string; ok: string };
 
-/** Salva preço, duração e visibilidade de cada serviço. */
+const CATEGORIES = Object.keys(CATEGORY_LABELS) as ServiceCategory[];
+const text = (formData: FormData, key: string, max: number) => String(formData.get(key) || '').trim().slice(0, max);
+// Tempo reservado: a Helaine digita em horas (aceita vírgula), o banco guarda em minutos.
+const minutesFrom = (formData: FormData, key: string) => Math.round(Number(String(formData.get(key) || '').replace(',', '.')) * 60);
+const validMinutes = (m: number) => Number.isFinite(m) && m >= MIN_SERVICE_MINUTES && m <= MAX_SERVICE_MINUTES;
+const HOURS_HELP = `em horas, de ${MIN_SERVICE_MINUTES / 60} a ${MAX_SERVICE_MINUTES / 60} (ex.: 4 ou 4,5)`;
+const NEEDS_0008 = 'Não foi possível salvar. Confira se a migração 0008 foi rodada no Supabase.';
+
+/** Campos de um serviço vindos do formulário (`suffix` separa um serviço do outro no mesmo form). */
+function serviceFields(formData: FormData, suffix: string) {
+  const category = text(formData, `category${suffix}`, 10) as ServiceCategory;
+  return {
+    name: text(formData, `name${suffix}`, 60),
+    category: CATEGORIES.includes(category) ? category : 'tranca' as ServiceCategory,
+    description: text(formData, `description${suffix}`, 300),
+    duration_label: text(formData, `duration${suffix}`, 40),
+    duration_minutes: minutesFrom(formData, `hours${suffix}`),
+    price: text(formData, `price${suffix}`, 40),
+  };
+}
+
+/** Salva os serviços do catálogo: nome, categoria, descrição, preço, duração e visibilidade. */
 export async function saveServices(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
-  // Tempo reservado: a Helaine digita em horas (aceita vírgula), o banco guarda em minutos.
-  const minutesOf = (id: string) => Math.round(Number(String(formData.get(`hours_${id}`) || '').replace(',', '.')) * 60);
-  const bad = services.find((s) => { const m = minutesOf(s.id); return !Number.isFinite(m) || m < MIN_SERVICE_MINUTES || m > MAX_SERVICE_MINUTES; });
-  if (bad) return { error: `Informe o tempo reservado de ${bad.name} em horas (de ${MIN_SERVICE_MINUTES / 60} a ${MAX_SERVICE_MINUTES / 60}). Ex.: 4 ou 4,5.`, ok: '' };
-  const rows = services.map((s) => ({
-    service_id: s.id,
-    duration_minutes: minutesOf(s.id),
-    price: String(formData.get(`price_${s.id}`) || '').trim().slice(0, 40) || null,
-    duration: String(formData.get(`duration_${s.id}`) || '').trim().slice(0, 40) || null,
-    active: formData.get(`active_${s.id}`) === 'on',
-    updated_at: new Date().toISOString(),
-  }));
+  const ids = [...new Set(formData.getAll('ids').map(String))].filter((id) => /^[a-z0-9-]{1,40}$/.test(id));
+  if (ids.length === 0) return { error: 'Nenhum serviço para salvar.', ok: '' };
+  const rows = ids.map((id) => ({ id, ...serviceFields(formData, `_${id}`), active: formData.get(`active_${id}`) === 'on', updated_at: new Date().toISOString() }));
+  const noName = rows.find((r) => r.name.length < 2);
+  if (noName) return { error: 'Todo serviço precisa de um nome.', ok: '' };
+  const badTime = rows.find((r) => !validMinutes(r.duration_minutes));
+  if (badTime) return { error: `Informe o tempo reservado de ${badTime.name} ${HOURS_HELP}.`, ok: '' };
   if (!rows.some((r) => r.active)) return { error: 'Deixe pelo menos um serviço aparecendo no site.', ok: '' };
   const supabase = await createAuthClient();
-  const { error } = await supabase.from('service_settings').upsert(rows, { onConflict: 'service_id' });
-  if (error) { console.error('saveServices', error); return { error: 'Não foi possível salvar. Confira se as migrações 0005 e 0006 foram rodadas no Supabase.', ok: '' }; }
+  // Só altera serviços que já existem: um id inventado no formulário não cria nada.
+  const { data: existing, error: readError } = await supabase.from('services').select('id').in('id', ids);
+  if (readError) { console.error('saveServices', readError); return { error: NEEDS_0008, ok: '' }; }
+  const known = new Set((existing ?? []).map((r) => r.id));
+  const { error } = await supabase.from('services').upsert(rows.filter((r) => known.has(r.id)), { onConflict: 'id' });
+  if (error) { console.error('saveServices', error); return { error: NEEDS_0008, ok: '' }; }
   revalidatePath('/', 'layout');
   return { error: '', ok: 'Serviços salvos. O site já mostra os novos valores.' };
+}
+
+/** Cria um serviço novo no catálogo. */
+export async function addService(_prev: SettingsState, formData: FormData): Promise<SettingsState> {
+  const fields = serviceFields(formData, '');
+  if (fields.name.length < 2) return { error: 'Informe o nome do serviço.', ok: '' };
+  if (!validMinutes(fields.duration_minutes)) return { error: `Informe o tempo reservado ${HOURS_HELP}.`, ok: '' };
+  const base = slugify(fields.name);
+  if (!base) return { error: 'Use letras ou números no nome do serviço.', ok: '' };
+  const supabase = await createAuthClient();
+  const { data: all, error: readError } = await supabase.from('services').select('id, name, sort');
+  if (readError) { console.error('addService', readError); return { error: NEEDS_0008, ok: '' }; }
+  if (all.some((r) => r.name.trim().toLowerCase() === fields.name.toLowerCase())) return { error: `Já existe um serviço chamado ${fields.name}.`, ok: '' };
+  const taken = new Set(all.map((r) => r.id));
+  let id = base;
+  for (let n = 2; taken.has(id); n++) id = `${base.slice(0, 36)}-${n}`;
+  const sort = Math.max(0, ...all.map((r) => r.sort ?? 0)) + 10;
+  const { error } = await supabase.from('services').insert({ id, ...fields, sort });
+  if (error) { console.error('addService', error); return { error: NEEDS_0008, ok: '' }; }
+  revalidatePath('/', 'layout');
+  return { error: '', ok: `${fields.name} criado. Já aparece no site e no agendamento.` };
 }
 
 /** Salva os horários de atendimento. Agendamentos já feitos não mudam. */

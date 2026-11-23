@@ -165,6 +165,21 @@ describe('lista do dia', () => {
     expect(render(b, { flags: { dayOff: true, blockedTimes: [] } })).toContain('Marcado em dia de folga');
   });
 
+  it('mostra a observação da cliente e o nome do serviço gravado no agendamento', () => {
+    const b = [booking(2, '11:00', 'Confirmado', { service_id: 'fulani-braids', service_name: 'Fulani Braids', notes: 'Alergia a tinta. Cabelo na cintura.' })];
+    const html = render(b);
+    expect(html).toContain('<div class="serv">Fulani Braids</div>');
+    expect(html).toContain('<div class="obs">Alergia a tinta. Cabelo na cintura.</div>');
+    // Sem nome gravado (agendamento antigo), usa o catálogo de reserva.
+    expect(render([booking(2, '11:00', 'Confirmado')])).toContain('<div class="serv">Nagô</div>');
+  });
+
+  it('observação maliciosa é escapada', () => {
+    const html = render([booking(2, '11:00', 'Confirmado', { notes: '<script>alert(1)</script>' })]);
+    expect(html).not.toContain('<script>alert');
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+  });
+
   it('dia vazio', () => {
     expect(render([])).toContain('Nenhum atendimento neste dia.');
   });

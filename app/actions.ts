@@ -2,7 +2,7 @@
 import { headers } from 'next/headers';
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
 import { turnstileConfigured, verifyTurnstile } from '@/lib/turnstile';
-import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, services as defaultServices, slotConflict, todaySP, toMinutes, type Booking, type BusyInterval } from '@/lib/data';
+import { CANCEL_MIN_HOURS, hoursUntil, isPastSlot, NOTES_MAX, services as defaultServices, slotConflict, todaySP, toMinutes, type Booking, type BusyInterval } from '@/lib/data';
 import { getActiveServices, getClosingTime, getTimeSlots, isMissingColumn } from '@/lib/settings';
 
 const NOT_CONFIGURED = 'O agendamento online ainda não está configurado. Fale com a Helaine pelo WhatsApp.';
@@ -15,7 +15,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isValidDate = (d: string) => DATE.test(d) && !Number.isNaN(Date.parse(d + 'T00:00:00Z')) && d >= todaySP();
 
-export type PublicBooking = Pick<Booking, 'id' | 'service_id' | 'date' | 'time' | 'status'>;
+export type PublicBooking = Pick<Booking, 'id' | 'service_id' | 'service_name' | 'date' | 'time' | 'status'>;
 
 type BusyRow = { time: string; service_id: string; duration_minutes?: number | null };
 
@@ -56,10 +56,10 @@ export async function getUpcomingDaysOff(): Promise<string[]> {
 }
 
 export async function createBooking(input: {
-  serviceId: string; date: string; time: string; name: string; phone: string; email: string; captcha?: string;
+  serviceId: string; date: string; time: string; name: string; phone: string; email: string; notes?: string; captcha?: string;
 }): Promise<{ id: string } | { error: string }> {
   if (!supabaseConfigured()) return { error: NOT_CONFIGURED };
-  const name = input.name.trim(), phone = input.phone.trim(), email = input.email.trim();
+  const name = input.name.trim(), phone = input.phone.trim(), email = input.email.trim(), notes = (input.notes ?? '').trim();
   const [services, timeSlots, closing] = await Promise.all([getActiveServices(), getTimeSlots(), getClosingTime()]);
   const service = services.find((s) => s.id === input.serviceId);
   if (!service) return { error: 'Escolha um serviço.' };
@@ -68,6 +68,7 @@ export async function createBooking(input: {
   if (isPastSlot(input.date, input.time)) return { error: 'Esse horário já passou. Escolha outro, por favor.' };
   if (name.length < 2 || name.length > 120) return { error: 'Informe seu nome completo.' };
   if (phone.replace(/\D/g, '').length < 10 || phone.length > 30) return { error: 'Informe um telefone com DDD.' };
+  if (notes.length > NOTES_MAX) return { error: `As observações podem ter até ${NOTES_MAX} letras.` };
   if (email && (email.length > 160 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return { error: 'E-mail inválido.' };
   if (turnstileConfigured()) {
     const ip = (await headers()).get('x-forwarded-for')?.split(',')[0].trim();
@@ -84,8 +85,16 @@ export async function createBooking(input: {
 
   const supabase = createServiceClient();
   const row = { service_id: input.serviceId, date: input.date, time: input.time, name, phone, email: email || null };
-  let { data, error } = await supabase.from('bookings').insert({ ...row, duration_minutes: service.minutes }).select('id').single();
-  if (error && isMissingColumn(error)) ({ data, error } = await supabase.from('bookings').insert(row).select('id').single());
+  // Do mais completo para o mais antigo: cada migração pendente (0008, depois 0006) tira colunas.
+  const attempts = [
+    { ...row, duration_minutes: service.minutes, service_name: service.name, notes: notes || null },
+    { ...row, duration_minutes: service.minutes },
+    row,
+  ];
+  let { data, error } = await supabase.from('bookings').insert(attempts[0]).select('id').single();
+  for (let i = 1; error && isMissingColumn(error) && i < attempts.length; i++) {
+    ({ data, error } = await supabase.from('bookings').insert(attempts[i]).select('id').single());
+  }
   if (error || !data) {
     if (error?.code === '23505' || (error?.code === 'P0001' && error.message === 'horario_ocupado')) return { error: SLOT_TAKEN };
     if (error?.code === 'P0001' && error.message === 'dia_de_folga') return { error: DAY_OFF };
@@ -101,11 +110,12 @@ export async function createBooking(input: {
 export async function getMyBookings(ids: string[]): Promise<PublicBooking[]> {
   const valid = ids.filter((id) => UUID.test(id)).slice(0, 50);
   if (!supabaseConfigured() || valid.length === 0) return [];
-  const { data, error } = await createServiceClient()
-    .from('bookings').select('id, service_id, date, time, status').in('id', valid)
-    .order('date', { ascending: false }).order('time', { ascending: false });
-  if (error) { console.error('getMyBookings', error); return []; }
-  return data as PublicBooking[];
+  const query = (cols: string) => createServiceClient().from('bookings').select(cols).in('id', valid)
+    .order('date', { ascending: false }).order('time', { ascending: false }).returns<PublicBooking[]>();
+  let { data, error } = await query('id, service_id, service_name, date, time, status');
+  if (error && isMissingColumn(error)) ({ data, error } = await query('id, service_id, date, time, status'));
+  if (error || !data) { console.error('getMyBookings', error); return []; }
+  return data;
 }
 
 /** A cliente cancela o próprio agendamento (só quem tem o ID, guardado no aparelho dela). */

@@ -3,7 +3,7 @@ import { isMissingColumn } from '@/lib/settings';
 import type { BookingStatus } from '@/lib/data';
 
 export type TabletBooking = {
-  id: string; service_id: string; date: string; time: string; name: string; phone: string; email: string | null;
+  id: string; service_id: string; service_name: string | null; notes: string | null; date: string; time: string; name: string; phone: string; email: string | null;
   status: BookingStatus; duration_minutes: number | null; reminder_sent_at: string | null;
 };
 
@@ -28,8 +28,21 @@ export class TabletError extends Error {
 }
 
 const COLUMNS = 'id, service_id, date, time, name, phone, email, status, duration_minutes';
-type Row = Omit<TabletBooking, 'reminder_sent_at' | 'duration_minutes'> & { duration_minutes?: number | null; reminder_sent_at?: string | null };
-const toBooking = (r: Row): TabletBooking => ({ ...r, duration_minutes: r.duration_minutes ?? null, reminder_sent_at: r.reminder_sent_at ?? null });
+type Optional = 'reminder_sent_at' | 'duration_minutes' | 'service_name' | 'notes';
+type Row = Omit<TabletBooking, Optional> & Partial<Pick<TabletBooking, Optional>>;
+const toBooking = (r: Row): TabletBooking => ({
+  ...r, duration_minutes: r.duration_minutes ?? null, reminder_sent_at: r.reminder_sent_at ?? null,
+  service_name: r.service_name ?? null, notes: r.notes ?? null,
+});
+// Do mais completo para o mais antigo: cada migração pendente (0008, depois 0007) tira colunas.
+const COLUMN_SETS = [`${COLUMNS}, reminder_sent_at, service_name, notes`, `${COLUMNS}, reminder_sent_at`, COLUMNS];
+
+/** Tenta a consulta com cada conjunto de colunas até um existir no banco. */
+async function withFallback<T>(run: (cols: string) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>) {
+  let result = await run(COLUMN_SETS[0]);
+  for (let i = 1; result.error && isMissingColumn(result.error) && i < COLUMN_SETS.length; i++) result = await run(COLUMN_SETS[i]);
+  return result;
+}
 
 function fail(where: string, error: { code?: string; message?: string }): never {
   console.error(`tablet ${where}`, error);
@@ -39,10 +52,7 @@ function fail(where: string, error: { code?: string; message?: string }): never 
 export const supabaseTabletRepo: TabletRepo = {
   async listDay(date) {
     const supabase = createServiceClient();
-    const query = (cols: string) => supabase.from('bookings').select(cols).eq('date', date).order('time').returns<Row[]>();
-    let { data, error } = await query(`${COLUMNS}, reminder_sent_at`);
-    // Antes da migração 0007 a coluna do lembrete não existe: lista sem ela.
-    if (error && isMissingColumn(error)) ({ data, error } = await query(COLUMNS));
+    const { data, error } = await withFallback((cols) => supabase.from('bookings').select(cols).eq('date', date).order('time').returns<Row[]>());
     if (error || !data) fail('listDay', error ?? {});
     return data.map(toBooking);
   },
@@ -60,9 +70,7 @@ export const supabaseTabletRepo: TabletRepo = {
 
   async get(id) {
     const supabase = createServiceClient();
-    const query = (cols: string) => supabase.from('bookings').select(cols).eq('id', id).returns<Row[]>().maybeSingle();
-    let { data, error } = await query(`${COLUMNS}, reminder_sent_at`);
-    if (error && isMissingColumn(error)) ({ data, error } = await query(COLUMNS));
+    const { data, error } = await withFallback((cols) => supabase.from('bookings').select(cols).eq('id', id).returns<Row[]>().maybeSingle());
     if (error) fail('get', error);
     return data ? toBooking(data) : null;
   },

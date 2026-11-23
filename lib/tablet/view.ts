@@ -1,4 +1,4 @@
-import { formatDateBR, fromMinutes, serviceName, toMinutes, type BookingStatus } from '@/lib/data';
+import { bookingServiceName, formatDateBR, fromMinutes, toMinutes, type BookingStatus } from '@/lib/data';
 import { COOKIE_PATH } from '@/lib/tablet/auth';
 import type { DayFlags, TabletBooking } from '@/lib/tablet/repo';
 
@@ -186,9 +186,9 @@ function card(b: TabletBooking, input: AgendaInput, isNext: boolean): string {
     actions += actionForm(b, date, csrf, 'reabrir', 'Desfazer', '', `Voltar ${b.name} (${b.time}) para "A confirmar"?`);
   }
 
-  // O projeto não tem campo de observação: a linha de observação mostra os avisos da agenda.
+  // Linha de observação: o que a cliente escreveu ao agendar, mais os avisos da agenda.
   const start = toMinutes(b.time), end = start + (b.duration_minutes ?? 60);
-  const notes: string[] = [];
+  const notes: string[] = b.notes ? [b.notes] : [];
   if (isOpen(b) && input.flags.dayOff) notes.push('Marcado em dia de folga');
   else if (isOpen(b) && input.flags.blockedTimes.some((t) => toMinutes(t) >= start && toMinutes(t) < end)) notes.push('Passa por um horário bloqueado');
 
@@ -201,7 +201,7 @@ function card(b: TabletBooking, input: AgendaInput, isNext: boolean): string {
 <div class="hora">${esc(b.time)}${b.duration_minutes ? `<small>até ${esc(fromMinutes(end))}</small>` : ''}</div>
 <div class="info">
 <div class="nome">${esc(b.name)}${isNext ? '<span class="selo prox">Próximo</span>' : ''}<span class="selo" style="background:${st.color}">${st.label}</span></div>
-<div class="serv">${esc(serviceName(b.service_id))}</div>
+<div class="serv">${esc(bookingServiceName(b))}</div>
 ${notes.length ? `<div class="obs">${esc(notes.join(' · '))}</div>` : ''}
 <div class="meta">${meta.join(' · ')}</div>
 </div>

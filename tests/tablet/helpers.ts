@@ -16,7 +16,7 @@ export const ID = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(1
 
 export function booking(n: number, time: string, status: BookingStatus, extra: Partial<TabletBooking> = {}): TabletBooking {
   return {
-    id: ID(n), service_id: 'nago', date: '2026-11-20', time, name: `Cliente ${n}`, phone: `1199999000${n}`,
+    id: ID(n), service_id: 'nago', service_name: null, notes: null, date: '2026-11-20', time, name: `Cliente ${n}`, phone: `1199999000${n}`,
     email: null, status, duration_minutes: 60, reminder_sent_at: null, ...extra,
   };
 }

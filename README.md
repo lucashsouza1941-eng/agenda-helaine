@@ -7,7 +7,9 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 - **Dias de folga:** no `/admin`, os admins bloqueiam um dia ou um período (férias). Esses dias ficam indisponíveis para as clientes; agendamentos que já existiam nesses dias continuam na agenda e o painel avisa.
 - **Horários bloqueados:** no `/admin`, os admins também bloqueiam só alguns horários de um dia (ex.: consulta médica), do mesmo jeito.
 - **Aviso pelo WhatsApp:** depois de agendar, a cliente vê um botão "Avisar a Helaine no WhatsApp" que abre o WhatsApp dela com a mensagem pronta (serviço, dia e horário). Aparece quando `NEXT_PUBLIC_WHATSAPP_HELAINE` está configurada.
-- **Serviços, preços e horários:** no `/admin`, os admins editam preço e duração de cada serviço, escolhem quais aparecem no site e marcam os horários de atendimento. Enquanto nada for salvo, o site usa os valores padrão do código.
+- **Catálogo de serviços:** fica no banco (tabela `services`), em três seções: Tranças, Cortes de cabelo e Outros serviços. No `/admin`, os admins criam serviços e editam nome, descrição, preço, duração e quais aparecem no site. Antes da migração `0008`, o site mostra 5 serviços de reserva que estão no código.
+- **Observações:** ao agendar, a cliente pode escrever um recado (cor, comprimento, alergias). Ele aparece no `/admin` e no painel do tablet.
+- **Horários de atendimento:** os admins marcam os horários em que as clientes podem agendar.
 - **Tempo de cada serviço:** cada serviço reserva um tempo na agenda (ex.: Box Braids, 6 horas), editável no `/admin`. Enquanto um atendimento não termina, nenhuma cliente consegue marcar outro: o site só mostra livres os horários em que o serviço inteiro cabe, e o banco recusa sobreposição.
 - **Fim do atendimento:** nenhum serviço pode terminar depois do horário de fechamento (20:00 por padrão, editável no `/admin` em "Horários de atendimento").
 - **Painel do tablet:** `/admin/tablet` é uma agenda do dia para um iPad antigo (iOS 9), com acesso por PIN. Veja [docs/tablet-ipad.md](docs/tablet-ipad.md).
@@ -16,7 +18,7 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 ## Configurar o Supabase (uma vez)
 
 1. Crie um projeto em [supabase.com](https://supabase.com).
-2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql`, `0003_nome_admin.sql`, `0004_horarios_bloqueados.sql`, `0005_configuracoes.sql`, `0006_duracao.sql` e `0007_tablet.sql` (um de cada vez, nessa ordem).
+2. Em **SQL Editor**, cole e rode o conteúdo de `supabase/migrations/0001_agendamentos.sql` depois `0002_folgas.sql`, `0003_nome_admin.sql`, `0004_horarios_bloqueados.sql`, `0005_configuracoes.sql`, `0006_duracao.sql`, `0007_tablet.sql` e `0008_catalogo.sql` (um de cada vez, nessa ordem).
 3. Em **Authentication > Sign In / Providers**, desative **Allow new users to sign up** (só os admins terão conta).
 4. Em **Authentication > Users > Add user > Create new user**, crie o login de cada admin com e-mail e senha (marque *Auto Confirm User*).
 5. No **SQL Editor**, dê permissão de admin a cada um (troque nome e e-mail; rode uma vez por pessoa):

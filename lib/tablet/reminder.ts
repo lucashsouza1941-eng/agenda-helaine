@@ -1,4 +1,4 @@
-import { formatDateBR, serviceName } from '@/lib/data';
+import { bookingServiceName, formatDateBR } from '@/lib/data';
 import type { TabletBooking } from '@/lib/tablet/repo';
 
 // O projeto ainda não tem envio automático de mensagens: o que existe hoje são
@@ -11,9 +11,9 @@ import type { TabletBooking } from '@/lib/tablet/repo';
 /** Existe um provedor de envio ligado? Hoje não. */
 export const reminderConfigured = () => false;
 
-export function reminderMessage(b: Pick<TabletBooking, 'name' | 'service_id' | 'date' | 'time'>): string {
+export function reminderMessage(b: Pick<TabletBooking, 'name' | 'service_id' | 'service_name' | 'date' | 'time'>): string {
   return `Olá, ${b.name.trim().split(/\s+/)[0]}! Lembrete do seu horário na Helaine Tranças: `
-    + `${serviceName(b.service_id)}, dia ${formatDateBR(b.date)} às ${b.time}. `
+    + `${bookingServiceName(b)}, dia ${formatDateBR(b.date)} às ${b.time}. `
     + 'Se precisar remarcar, é só avisar por aqui.';
 }
 

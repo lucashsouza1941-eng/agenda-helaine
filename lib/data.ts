@@ -1,18 +1,31 @@
 /** minutes: tempo que o serviço ocupa na agenda (duration é só o texto que a cliente lê). */
 /** photo: foto do cartão (em public/); image é o gradiente que aparece enquanto ela carrega. */
-export type Service = { id:string; name:string; duration:string; minutes:number; price:string; description:string; image:string; photo?:string; photoAlt?:string; photoPosition?:string };
+export type ServiceCategory = 'tranca'|'corte'|'outro';
+/** A ordem daqui é a ordem das seções no site. */
+export const CATEGORY_LABELS: Record<ServiceCategory,string> = { tranca:'Tranças', corte:'Cortes de cabelo', outro:'Outros serviços' };
+export type Service = { id:string; name:string; category:ServiceCategory; duration:string; minutes:number; price:string; description:string; image:string; photo?:string; photoAlt?:string; photoPosition?:string };
+// Catálogo de reserva: vale enquanto a tabela `services` (migração 0008) não existir.
+// Depois dela, daqui só se aproveitam o gradiente e o enquadramento da foto de cada id.
 export const services: Service[] = [
-  {id:'box-braids',name:'Box Braids',duration:'4 a 6 horas',minutes:360,price:'A definir',description:'Tranças tradicionais e versáteis, com acabamento profissional e orientação de cuidados. ',image:'linear-gradient(135deg,#34103f,#8d3f62 55%,#f0a01a)',photo:'/images/servicos/box-braids.jpg',photoAlt:'Mulher de costas com box braids longas até a cintura e argolas douradas',photoPosition:'50% 35%'},
-  {id:'nago',name:'Nagô',duration:'2 a 4 horas',minutes:240,price:'A definir',description:'Tranças rente ao couro cabeludo com desenho e acabamento personalizado.',image:'linear-gradient(135deg,#27132f,#703151 55%,#c87322)',photo:'/images/servicos/nago.jpg',photoAlt:'Mulher de costas com tranças nagô rentes à cabeça, em fileiras até a nuca',photoPosition:'50% 30%'},
-  {id:'twist',name:'Twist',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Visual leve, versátil e contemporâneo, com diferentes comprimentos.',image:'linear-gradient(135deg,#331743,#7f255f 55%,#e1a12a)',photo:'/images/servicos/twist.jpg',photoAlt:'Mulher de costas com twists longos, torcidos como corda',photoPosition:'45% 35%'},
-  {id:'chanel',name:'Tranças Chanel',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Elegância, praticidade e identidade em um comprimento marcante.',image:'linear-gradient(135deg,#251029,#5b1e56 55%,#b8761f)',photo:'/images/servicos/chanel.jpg',photoAlt:'Mulher de costas com tranças em corte chanel, na altura do queixo',photoPosition:'50% 35%'},
-  {id:'manutencao',name:'Manutenção',duration:'1 a 3 horas',minutes:180,price:'A definir',description:'Cuidado para prolongar a beleza e a durabilidade das suas tranças.',image:'linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)',photo:'/images/servicos/manutencao.jpg',photoAlt:'Mãos de uma trancista refazendo a raiz das tranças com um pente de cabo fino',photoPosition:'50% 60%'}
+  {id:'box-braids',category:'tranca',name:'Box Braids',duration:'4 a 6 horas',minutes:360,price:'A definir',description:'Tranças tradicionais e versáteis, com acabamento profissional e orientação de cuidados. ',image:'linear-gradient(135deg,#34103f,#8d3f62 55%,#f0a01a)',photo:'/images/servicos/box-braids.jpg',photoAlt:'Mulher de costas com box braids longas até a cintura e argolas douradas',photoPosition:'50% 35%'},
+  {id:'nago',category:'tranca',name:'Nagô',duration:'2 a 4 horas',minutes:240,price:'A definir',description:'Tranças rente ao couro cabeludo com desenho e acabamento personalizado.',image:'linear-gradient(135deg,#27132f,#703151 55%,#c87322)',photo:'/images/servicos/nago.jpg',photoAlt:'Mulher de costas com tranças nagô rentes à cabeça, em fileiras até a nuca',photoPosition:'50% 30%'},
+  {id:'twist',category:'tranca',name:'Twist',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Visual leve, versátil e contemporâneo, com diferentes comprimentos.',image:'linear-gradient(135deg,#331743,#7f255f 55%,#e1a12a)',photo:'/images/servicos/twist.jpg',photoAlt:'Mulher de costas com twists longos, torcidos como corda',photoPosition:'45% 35%'},
+  {id:'chanel',category:'tranca',name:'Tranças Chanel',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Elegância, praticidade e identidade em um comprimento marcante.',image:'linear-gradient(135deg,#251029,#5b1e56 55%,#b8761f)',photo:'/images/servicos/chanel.jpg',photoAlt:'Mulher de costas com tranças em corte chanel, na altura do queixo',photoPosition:'50% 35%'},
+  {id:'manutencao',category:'outro',name:'Manutenção',duration:'1 a 3 horas',minutes:180,price:'A definir',description:'Cuidado para prolongar a beleza e a durabilidade das suas tranças.',image:'linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)',photo:'/images/servicos/manutencao.jpg',photoAlt:'Mãos de uma trancista refazendo a raiz das tranças com um pente de cabo fino',photoPosition:'50% 60%'}
 ];
 export const timeSlots=['09:00','10:00','11:00','14:00','15:00','16:00','17:00'];
 export const bookingStatuses = ['Pendente', 'Confirmado', 'Finalizado', 'Cancelado'] as const;
 export type BookingStatus = typeof bookingStatuses[number];
-export type Booking = { id:string; service_id:string; date:string; time:string; duration_minutes?:number; name:string; phone:string; email:string|null; status:BookingStatus; created_at:string };
+export type Booking = { id:string; service_id:string; service_name?:string|null; notes?:string|null; date:string; time:string; duration_minutes?:number; name:string; phone:string; email:string|null; status:BookingStatus; created_at:string };
 export const serviceName = (id:string) => services.find(s=>s.id===id)?.name ?? id;
+/** Nome do serviço de um agendamento: o gravado no dia, ou o do catálogo de reserva. */
+export const bookingServiceName = (b:{service_id:string; service_name?:string|null}) => b.service_name || serviceName(b.service_id);
+/** Tamanho máximo das observações da cliente (igual ao do banco). */
+export const NOTES_MAX = 500;
+/** Gradientes para os cartões de serviços sem foto. */
+export const CARD_GRADIENTS = ['linear-gradient(135deg,#34103f,#8d3f62 55%,#f0a01a)','linear-gradient(135deg,#27132f,#703151 55%,#c87322)','linear-gradient(135deg,#331743,#7f255f 55%,#e1a12a)','linear-gradient(135deg,#251029,#5b1e56 55%,#b8761f)','linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)'];
+/** "Box Braids!" -> "box-braids" (id de um serviço novo). */
+export const slugify = (text:string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40).replace(/-+$/,'');
 /** Data de hoje (AAAA-MM-DD) no fuso de São Paulo. */
 export const todaySP = () => new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
 /** Hora atual (HH:MM) no fuso de São Paulo. */

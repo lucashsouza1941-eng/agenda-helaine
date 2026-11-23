@@ -3,6 +3,7 @@ import '@fontsource/anton/latin-400.css';
 import '@fontsource/dm-serif-display/latin-400.css';
 import './globals.css';
 import './street.css';
+import { THEME_SCRIPT } from '@/lib/theme';
 
 const description = 'Tranças com atendimento cuidadoso. Escolha o serviço, a data e o horário e agende online, sem precisar criar conta.';
 // Na Vercel, o endereço de produção vem desta variável; sem ela, os links da prévia ficam relativos ao localhost.
@@ -22,7 +23,8 @@ export const viewport: Viewport = { themeColor: '#4b0076' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body>
         {children}
       </body>

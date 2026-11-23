@@ -5,26 +5,26 @@
   --display:'Anton',Impact,'Arial Narrow',sans-serif;
   --serif:'DM Serif Display',Georgia,'Times New Roman',serif;
   --deep:#2a0042;
-  --hard:5px 5px 0 var(--deep);
+  --hard:5px 5px 0 var(--edge);
 }
 
 /* Fundo com retícula bem leve, como papel impresso */
-body{background:var(--bg) radial-gradient(rgba(75,0,118,.07) 1.2px,transparent 1.4px) 0 0/18px 18px}
+body{background:var(--bg) radial-gradient(var(--dot) 1.2px,transparent 1.4px) 0 0/18px 18px}
 
 /* Títulos em letra de cartaz */
 .hero h1,.page-title h1,.section h2,.story h2,.contact h2,.panel h2,.empty h2,.new-booking h2,.service-group h2{
   font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.012em;line-height:1.02}
-.page-title h1{font-size:clamp(44px,7vw,74px);color:var(--purple)}
-.section h2,.contact h2{color:var(--purple)}
-.panel h2{font-size:24px;color:var(--purple)}
+.page-title h1{font-size:clamp(44px,7vw,74px);color:var(--title)}
+.section h2,.contact h2{color:var(--title)}
+.panel h2{font-size:24px;color:var(--title)}
 
 /* Três bolinhas da logo, como assinatura embaixo do título da página */
 .page-title:after{content:"";display:block;width:74px;height:18px;margin-top:18px;
   background:radial-gradient(circle at 9px 9px,var(--gold) 8px,transparent 9px),radial-gradient(circle at 37px 9px,var(--lilac) 8px,transparent 9px),radial-gradient(circle at 65px 9px,var(--gold) 8px,transparent 9px)}
-.page-title:after{filter:drop-shadow(1px 1px 0 var(--deep))}
+.page-title:after{filter:drop-shadow(1px 1px 0 var(--edge))}
 
 /* Etiqueta colada torta */
-.eyebrow,.eyebrow.dark{display:inline-block;background:var(--gold);color:var(--deep);border:2px solid var(--deep);padding:5px 10px 4px;font-size:11px;letter-spacing:.14em;transform:rotate(-2deg);box-shadow:3px 3px 0 var(--deep)}
+.eyebrow,.eyebrow.dark{display:inline-block;background:var(--gold);color:var(--deep);border:2px solid var(--edge);padding:5px 10px 4px;font-size:11px;letter-spacing:.14em;transform:rotate(-2deg);box-shadow:3px 3px 0 var(--edge)}
 .hero .eyebrow,.story .eyebrow{background:var(--lilac)}
 
 /* Topo */
@@ -34,9 +34,9 @@ body{background:var(--bg) radial-gradient(rgba(75,0,118,.07) 1.2px,transparent 1
 .top nav a:hover{color:var(--gold)}
 
 /* Botões: sombra seca, apertam ao clicar */
-.btn{border-radius:10px;border:2px solid var(--deep);box-shadow:4px 4px 0 var(--deep);font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.06em;font-size:16px;min-height:50px;transition:transform .08s,box-shadow .08s}
-.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--deep)}
-.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--deep)}
+.btn{border-radius:10px;border:2px solid var(--edge);box-shadow:4px 4px 0 var(--edge);font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.06em;font-size:16px;min-height:50px;transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--edge)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--edge)}
 .btn.ghost{border-color:var(--lilac);color:var(--lilac);background:transparent;box-shadow:4px 4px 0 rgba(0,0,0,.35)}
 .btn.ghost-dark{font-family:var(--display);font-weight:400;font-size:14px;min-height:46px}
 .btn.whatsapp{color:#fff}
@@ -46,52 +46,52 @@ body{background:var(--bg) radial-gradient(rgba(75,0,118,.07) 1.2px,transparent 1
 .hero{background:
   repeating-linear-gradient(115deg,transparent 0 46px,rgba(247,198,251,.045) 46px 50px),
   radial-gradient(circle at 78% 42%,#6a12a3,transparent 48%),#4b0076;
-  border-bottom:3px solid var(--deep)}
+  border-bottom:3px solid var(--edge)}
 .hero h1{font-size:clamp(52px,7.4vw,104px);margin:22px 0 18px;text-shadow:4px 4px 0 var(--deep)}
 .hero h1 em{font-style:normal;color:var(--gold)}
 .hero p{color:#eddcf3}
 .hero-art img{width:min(300px,100%);padding:34px 34px 26px;border:3px solid var(--lilac);border-radius:220px 220px 18px 18px;background:#4b0076;box-shadow:10px 10px 0 var(--gold);transform:rotate(2deg)}
 
 /* Faixa de fita adesiva com o lema */
-.tape{background:var(--gold);color:var(--deep);border-top:3px solid var(--deep);border-bottom:3px solid var(--deep);overflow:hidden;white-space:nowrap;font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:17px;padding:11px 0;transform:rotate(-1.2deg) scale(1.03);margin:-16px 0 0;position:relative;z-index:4}
+.tape{background:var(--gold);color:var(--deep);border-top:3px solid var(--edge);border-bottom:3px solid var(--edge);overflow:hidden;white-space:nowrap;font-family:var(--display);text-transform:uppercase;letter-spacing:.14em;font-size:17px;padding:11px 0;transform:rotate(-1.2deg) scale(1.03);margin:-16px 0 0;position:relative;z-index:4}
 .tape span{display:inline-block;padding-right:28px}
-.tape i{font-style:normal;color:var(--purple);padding-right:28px}
+.tape i{font-style:normal;color:var(--title);padding-right:28px}
 
 /* Atalhos da capa */
 .quick{background:transparent;border:0;box-shadow:none;gap:12px;padding:0;margin-top:34px}
-.quick a{background:var(--purple);border:2px solid var(--deep);border-radius:12px;box-shadow:var(--hard);font-size:20px;color:var(--lilac);transition:transform .08s}
+.quick a{background:var(--purple);border:2px solid var(--edge);border-radius:12px;box-shadow:var(--hard);font-size:20px;color:var(--lilac);transition:transform .08s}
 .quick a b{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.07em;font-size:15px;color:#fff}
 .quick a:hover{background:var(--gold);color:var(--deep);transform:translate(-2px,-2px)}
 .quick a:hover b{color:var(--deep)}
 
 /* Cartões: contorno firme e sombra seca */
-.service-card,.panel,.booking-item,.empty,.install-app,.new-booking,.summary-card{border:2px solid var(--deep);border-radius:14px;box-shadow:var(--hard)}
+.service-card,.panel,.booking-item,.empty,.install-app,.new-booking,.summary-card{border:2px solid var(--edge);border-radius:14px;box-shadow:var(--hard)}
 .summary-card{box-shadow:none;border-style:dashed}
 .service-card{transition:transform .1s,box-shadow .1s}
 .service-card:hover{transform:translate(-2px,-2px);box-shadow:7px 7px 0 var(--gold)}
-.service-photo{border-bottom:2px solid var(--deep)}
-.service-card h3{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.02em;font-size:23px;color:var(--purple)}
+.service-photo{border-bottom:2px solid var(--edge)}
+.service-card h3{font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.02em;font-size:23px;color:var(--title)}
 .meta{font-size:12px}
 .text-link{text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid var(--gold);padding-bottom:1px}
-.promo-card{border:2px solid var(--deep);border-radius:14px;box-shadow:5px 5px 0 var(--gold)}
+.promo-card{border:2px solid var(--edge);border-radius:14px;box-shadow:5px 5px 0 var(--gold)}
 .promo-card h3{font-family:var(--display);font-weight:400;text-transform:uppercase;font-size:26px}
 
 /* Faixa da história: laranja com a frase num cartaz roxo */
-.story{background:var(--gold) repeating-linear-gradient(115deg,transparent 0 46px,rgba(42,0,66,.05) 46px 50px);color:var(--deep);border-top:3px solid var(--deep);border-bottom:3px solid var(--deep)}
+.story{background:var(--gold) repeating-linear-gradient(115deg,transparent 0 46px,rgba(42,0,66,.05) 46px 50px);color:var(--deep);border-top:3px solid var(--edge);border-bottom:3px solid var(--edge)}
 .story h2{color:var(--deep)}
 .story p{color:#3d1457;font-weight:600}
-.quote{background:var(--purple);color:var(--lilac);border:2px solid var(--deep);border-radius:14px;box-shadow:8px 8px 0 var(--deep);font-family:var(--serif);font-style:normal;transform:rotate(1.5deg)}
+.quote{background:var(--purple);color:var(--lilac);border:2px solid var(--edge);border-radius:14px;box-shadow:8px 8px 0 var(--edge);font-family:var(--serif);font-style:normal;transform:rotate(1.5deg)}
 
 /* Formulários e horários */
-.panel input,.panel select,.panel textarea,.conta .panel input{border:2px solid #cdb8dc;border-radius:10px}
-.panel input:focus,.panel select:focus,.panel textarea:focus{border-color:var(--purple);box-shadow:3px 3px 0 var(--gold);outline:none}
-.slot{border:2px solid var(--deep);border-radius:9px;font-family:var(--display);font-size:17px;letter-spacing:.04em;background:#fff;color:var(--purple)}
+.panel input,.panel select,.panel textarea,.conta .panel input{border:2px solid var(--field-line);border-radius:10px}
+.panel input:focus,.panel select:focus,.panel textarea:focus{border-color:var(--title);box-shadow:3px 3px 0 var(--gold);outline:none}
+.slot{border:2px solid var(--edge);border-radius:9px;font-family:var(--display);font-size:17px;letter-spacing:.04em;background:var(--field);color:var(--title)}
 .slot:hover{background:var(--lilac)}
-.slot.active{background:var(--gold);border-color:var(--deep);color:var(--deep);box-shadow:3px 3px 0 var(--deep);font-weight:400}
-.date-tile{border:2px solid var(--deep);border-radius:10px;font-family:var(--display)}
+.slot.active{background:var(--gold);border-color:var(--edge);color:var(--deep);box-shadow:3px 3px 0 var(--edge);font-weight:400}
+.date-tile{border:2px solid var(--edge);border-radius:10px;font-family:var(--display)}
 .status{border:1.5px solid currentColor;border-radius:6px;text-transform:uppercase;letter-spacing:.06em}
-.conta-tabs button{border:2px solid var(--deep);border-radius:10px;font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.05em;font-size:14px}
-.conta-tabs button.active{border-color:var(--deep);box-shadow:3px 3px 0 var(--deep)}
+.conta-tabs button{border:2px solid var(--edge);border-radius:10px;font-family:var(--display);font-weight:400;text-transform:uppercase;letter-spacing:.05em;font-size:14px}
+.conta-tabs button.active{border-color:var(--edge);box-shadow:3px 3px 0 var(--edge)}
 
 /* Rodapé */
 footer{background:var(--deep) repeating-linear-gradient(115deg,transparent 0 46px,rgba(247,198,251,.04) 46px 50px);border-top:3px solid var(--gold)}
@@ -106,8 +106,23 @@ footer p{font-family:var(--display);text-transform:uppercase;letter-spacing:.14e
 @media(max-width:600px){
   .tape{font-size:14px}
   .page-title h1{font-size:44px}
-  .service-card,.panel,.booking-item,.empty,.install-app,.new-booking{box-shadow:4px 4px 0 var(--deep)}
+  .service-card,.panel,.booking-item,.empty,.install-app,.new-booking{box-shadow:4px 4px 0 var(--edge)}
 }
 @media(prefers-reduced-motion:reduce){.btn,.service-card,.quick a{transition:none}}
 .hero p.eyebrow{color:var(--deep);font-size:11px;line-height:1.4;max-width:none}
 html,body{overflow-x:clip}
+.hero,.story,.tape,.quick a,.quote,.promo-card,.top,footer{--edge:#2a0042}
+.tape i{color:#4b0076}
+.story h2{color:#2a0042}
+
+/* ---------- Modo escuro ----------
+   O botão do topo grava a escolha (data-theme no <html>). Sem escolha, segue o aparelho. */
+:root[data-theme=dark]{--bg:#170024;--paper:#260a38;--field:#2f1244;--soft:#3a1a52;--ink:#f5ebf9;--muted:#bda8cb;--line:#4f2c69;--title:#f7c6fb;--edge:#9a6cbc;--dot:rgba(247,198,251,.06);--field-line:#6b4686;--ok-bg:#143d22;--ok:#8fe3a8;--warn-bg:#4a3210;--warn:#fbc77e;--err-bg:#4d1714;--err:#ffb3ab;--info-bg:#152a4a;--info:#a3c8f7;--shadow:0 18px 45px rgba(0,0,0,.45);color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#170024;--paper:#260a38;--field:#2f1244;--soft:#3a1a52;--ink:#f5ebf9;--muted:#bda8cb;--line:#4f2c69;--title:#f7c6fb;--edge:#9a6cbc;--dot:rgba(247,198,251,.06);--field-line:#6b4686;--ok-bg:#143d22;--ok:#8fe3a8;--warn-bg:#4a3210;--warn:#fbc77e;--err-bg:#4d1714;--err:#ffb3ab;--info-bg:#152a4a;--info:#a3c8f7;--shadow:0 18px 45px rgba(0,0,0,.45);color-scheme:dark}}
+.theme-toggle{border:1.5px solid rgba(247,198,251,.55);background:rgba(255,255,255,.1);color:#fff;border-radius:8px;width:40px;height:36px;font-size:17px;line-height:1;cursor:pointer;flex:none}
+.theme-toggle:hover{background:var(--gold);color:#2a0042;border-color:var(--gold)}
+.admin aside .theme-toggle{align-self:flex-start}
+input,select,textarea{color:var(--ink)}
+:root[data-theme=dark] .service-photo img,:root[data-theme=dark] .mural img{filter:brightness(.94)}
+@media(max-width:900px){.top .brand{margin-right:auto}.top .theme-toggle{order:2}.top nav{order:3}}
+.panel textarea,.mural-form input,.mural-form textarea{background:var(--field)}

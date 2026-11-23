@@ -1,5 +1,5 @@
 'use client';
-import { useActionState } from 'react';
+import { useActionState, useRef } from 'react';
 import { addService, saveOpeningSlots, saveServices } from '@/app/admin/actions';
 import { CATEGORY_LABELS, type ServiceCategory } from '@/lib/data';
 import type { ServiceWithStatus } from '@/lib/settings';
@@ -50,15 +50,33 @@ export function AddServiceForm() {
 
 export function OpeningHoursForm({ options, selected, closingOptions, closing }: { options: string[]; selected: string[]; closingOptions: string[]; closing: string }) {
   const [state, action, pending] = useActionState(saveOpeningSlots, { error: '', ok: '' });
-  return <form action={action} className="settings-form">
+  const form = useRef<HTMLFormElement>(null);
+  // Atalhos: marcam os horários entre "Abre às" e "Atendimento até", sem salvar.
+  const mark = (everyHalfHour: boolean) => {
+    const f = form.current;
+    if (!f) return;
+    const from = (f.elements.namedItem('from') as HTMLSelectElement).value, to = (f.elements.namedItem('closing') as HTMLSelectElement).value;
+    f.querySelectorAll<HTMLInputElement>('input[name="times"]').forEach((box) => {
+      box.checked = box.value >= from && box.value < to && (everyHalfHour || box.value.endsWith(':00'));
+    });
+  };
+  return <form action={action} className="settings-form" ref={form}>
+    <div className="hours-range">
+      <label>Abre às
+        <select name="from" defaultValue={selected[0] ?? options[0]}>{options.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+      </label>
+      <label>Atendimento até
+        <select name="closing" defaultValue={closing}>{closingOptions.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+      </label>
+      <button type="button" className="btn ghost-dark" onClick={() => mark(true)}>Marcar de 30 em 30 min</button>
+      <button type="button" className="btn ghost-dark" onClick={() => mark(false)}>Marcar de hora em hora</button>
+    </div>
+    <p className="muted small">Os botões acima só marcam os horários abaixo. Depois ajuste o que quiser (por exemplo, desmarque o almoço) e clique em “Salvar horários”.</p>
     <fieldset className="slot-picks">
-      <legend>Horários em que as clientes podem agendar</legend>
+      <legend>Horários em que um atendimento pode começar</legend>
       {options.map((t) => <label key={t} className="slot-pick"><input type="checkbox" name="times" value={t} defaultChecked={selected.includes(t)} /><span>{t}</span></label>)}
     </fieldset>
-    <label>Atendimento até
-      <select name="closing" defaultValue={closing}>{closingOptions.map((t) => <option key={t} value={t}>{t}</option>)}</select>
-    </label>
-    <p className="muted small">Nenhum serviço pode terminar depois desse horário: o site só oferece os horários em que o serviço inteiro cabe.</p>
+    <p className="muted small">Nenhum serviço pode terminar depois do “Atendimento até”: o site só oferece os horários em que o serviço inteiro cabe.</p>
     <p className="muted small">Vale para todos os dias. Para tirar um dia ou um horário específico, use as folgas e os horários bloqueados.</p>
     <Feedback state={state} />
     <button className="btn gold" disabled={pending}>{pending ? 'Salvando...' : 'Salvar horários'}</button>

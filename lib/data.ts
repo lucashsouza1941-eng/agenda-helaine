@@ -13,7 +13,10 @@ export const services: Service[] = [
   {id:'chanel',category:'tranca',name:'Tranças Chanel',duration:'3 a 5 horas',minutes:300,price:'A definir',description:'Elegância, praticidade e identidade em um comprimento marcante.',image:'linear-gradient(135deg,#251029,#5b1e56 55%,#b8761f)',photo:'/images/servicos/chanel.jpg',photoAlt:'Mulher de costas com tranças em corte chanel, na altura do queixo',photoPosition:'50% 35%'},
   {id:'manutencao',category:'outro',name:'Manutenção',duration:'1 a 3 horas',minutes:180,price:'A definir',description:'Cuidado para prolongar a beleza e a durabilidade das suas tranças.',image:'linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)',photo:'/images/servicos/manutencao.jpg',photoAlt:'Mãos de uma trancista refazendo a raiz das tranças com um pente de cabo fino',photoPosition:'50% 60%'}
 ];
-export const timeSlots=['09:00','10:00','11:00','14:00','15:00','16:00','17:00'];
+/** Horários de início de meia em meia hora, de `from` (inclusive) até `to` (exclusive). */
+export const halfHourSlots = (from:string, to:string) => { const out:string[]=[]; const [fh,fm]=from.split(':').map(Number), [th,tm]=to.split(':').map(Number); for(let m=fh*60+fm; m<th*60+tm; m+=30) out.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${m%60?'30':'00'}`); return out; };
+/** Horários de atendimento enquanto nada for salvo no /admin: de 30 em 30 min, das 08:00 às 19:30. */
+export const timeSlots=halfHourSlots('08:00','20:00');
 export const bookingStatuses = ['Pendente', 'Confirmado', 'Finalizado', 'Cancelado'] as const;
 export type BookingStatus = typeof bookingStatuses[number];
 export type Booking = { id:string; service_id:string; service_name?:string|null; notes?:string|null; date:string; time:string; duration_minutes?:number; name:string; phone:string; email:string|null; status:BookingStatus; created_at:string };
@@ -55,4 +58,20 @@ export function slotConflict(time:string, minutes:number, busy:BusyInterval[], b
   if (blocked.some(b=>{ const m=toMinutes(b); return m>=start && m<end; })) return 'blocked';
   if (busy.some(b=>b.start<end && start<b.end)) return 'busy';
   return null;
+}
+
+/** Por que não há nenhum horário para escolher (ou null se há). */
+export type NoSlotsReason = 'day-off'|'no-fit'|'past'|'full'|null;
+/**
+ * Horários em que um serviço de `minutes` pode começar num dia. Só entram os que
+ * cabem inteiros: sem atendimento por cima, sem horário bloqueado no meio e
+ * terminando até o fechamento. `isPast` diz se um horário de hoje já passou.
+ */
+export function freeSlots(o:{ slots:string[]; minutes:number; busy:BusyInterval[]; blocked:string[]; closing:string; dayOff:boolean; isPast:(t:string)=>boolean }): { free:string[]; reason:NoSlotsReason } {
+  if (o.dayOff) return { free:[], reason:'day-off' };
+  const fits = o.slots.filter(t=>slotConflict(t,o.minutes,[],[],o.closing)===null);            // cabe no expediente
+  if (fits.length===0) return { free:[], reason:'no-fit' };
+  const open = fits.filter(t=>slotConflict(t,o.minutes,o.busy,o.blocked,o.closing)===null);   // e está livre
+  const free = open.filter(t=>!o.isPast(t));
+  return { free, reason: free.length ? null : open.length ? 'past' : 'full' };
 }

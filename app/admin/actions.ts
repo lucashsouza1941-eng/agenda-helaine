@@ -176,3 +176,50 @@ export async function saveOpeningSlots(_prev: SettingsState, formData: FormData)
   revalidatePath('/', 'layout');
   return { error: '', ok: `Horários salvos: ${times.join(', ')}. Atendimento até as ${closing}.` };
 }
+
+export type PromoState = { error: string; ok: string };
+const MAX_PROMO_DAYS = 366;
+const NEEDS_0009 = 'Não foi possível salvar. Confira se a migração 0009 foi rodada no Supabase.';
+
+/** Cria uma promoção: serviço (ou todos), período do atendimento e preço promocional. */
+export async function addPromotion(_prev: PromoState, formData: FormData): Promise<PromoState> {
+  const title = text(formData, 'title', 80), description = text(formData, 'description', 300), price = text(formData, 'price', 60);
+  const serviceId = text(formData, 'service_id', 40) || null;
+  const from = text(formData, 'from', 10), to = text(formData, 'to', 10) || from;
+  if (title.length < 2) return { error: 'Dê um nome para a promoção.', ok: '' };
+  if (!price) return { error: 'Informe o preço ou o desconto da promoção.', ok: '' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return { error: 'Escolha a data de início.', ok: '' };
+  if (to < from) return { error: 'A data final precisa ser depois da inicial.', ok: '' };
+  if (to < todaySP()) return { error: 'Esse período já passou. Escolha datas a partir de hoje.', ok: '' };
+  if ((Date.parse(to) - Date.parse(from)) / 864e5 > MAX_PROMO_DAYS) return { error: 'A promoção pode durar no máximo um ano.', ok: '' };
+  const supabase = await createAuthClient();
+  if (serviceId) {
+    const { data: service, error: serviceError } = await supabase.from('services').select('id').eq('id', serviceId).maybeSingle();
+    if (serviceError) { console.error('addPromotion', serviceError); return { error: NEEDS_0009, ok: '' }; }
+    if (!service) return { error: 'Serviço não encontrado.', ok: '' };
+  }
+  const { error } = await supabase.from('promotions').insert({ title, description, price, service_id: serviceId, starts_on: from, ends_on: to });
+  if (error) { console.error('addPromotion', error); return { error: NEEDS_0009, ok: '' }; }
+  revalidatePath('/', 'layout');
+  return { error: '', ok: `Promoção ${title} criada. Vale para atendimentos de ${formatDateBR(from)}${to === from ? '' : ` a ${formatDateBR(to)}`}.` };
+}
+
+const PROMO_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Pausa ou reativa uma promoção (pausada não aparece no site nem vale no agendamento). */
+export async function setPromotionActive(id: string, active: boolean) {
+  if (!PROMO_ID.test(id)) return;
+  const supabase = await createAuthClient();
+  const { error } = await supabase.from('promotions').update({ active }).eq('id', id);
+  if (error) console.error('setPromotionActive', error);
+  revalidatePath('/', 'layout');
+}
+
+/** Apaga uma promoção. Agendamentos já feitos com ela continuam com a promoção anotada. */
+export async function deletePromotion(id: string) {
+  if (!PROMO_ID.test(id)) return;
+  const supabase = await createAuthClient();
+  const { error } = await supabase.from('promotions').delete().eq('id', id);
+  if (error) console.error('deletePromotion', error);
+  revalidatePath('/', 'layout');
+}

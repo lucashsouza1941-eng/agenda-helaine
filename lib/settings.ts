@@ -1,5 +1,6 @@
 import { createServiceClient, supabaseConfigured } from '@/lib/supabase/server';
-import { CARD_GRADIENTS, DEFAULT_CLOSING_TIME, formatDuration, services as defaultServices, timeSlots as defaultTimeSlots, type Service, type ServiceCategory } from '@/lib/data';
+import { currentPromos, PROMO_COLUMNS, type Promotion } from '@/lib/promo';
+import { CARD_GRADIENTS, DEFAULT_CLOSING_TIME, formatDuration, todaySP, services as defaultServices, timeSlots as defaultTimeSlots, type Service, type ServiceCategory } from '@/lib/data';
 
 export type ServiceWithStatus = Service & { active: boolean };
 
@@ -84,4 +85,17 @@ export async function getClosingTime(): Promise<string> {
   // Antes da migração 0006 a tabela não existe: usa o padrão.
   if (error) { if (error.code !== '42P01' && error.code !== 'PGRST205') console.error('getClosingTime', error); return DEFAULT_CLOSING_TIME; }
   return data && closingOptions.includes(data.value) ? data.value : DEFAULT_CLOSING_TIME;
+}
+
+/** Todas as promoções (o /admin mostra também as vencidas e as pausadas). Sem a migração 0009, nenhuma. */
+export async function getPromotions(): Promise<{ promotions: Promotion[]; ready: boolean }> {
+  if (!supabaseConfigured()) return { promotions: [], ready: false };
+  const { data, error } = await createServiceClient().from('promotions').select(PROMO_COLUMNS).order('starts_on').returns<Promotion[]>();
+  if (error || !data) { if (!isMissingTable(error)) console.error('getPromotions', error); return { promotions: [], ready: false }; }
+  return { promotions: data, ready: true };
+}
+
+/** Promoções ativas que ainda não terminaram, para as páginas das clientes. */
+export async function getCurrentPromotions(): Promise<Promotion[]> {
+  return currentPromos((await getPromotions()).promotions, todaySP());
 }

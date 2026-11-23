@@ -103,3 +103,24 @@
 .install-app p{margin:0;font-weight:700}
 .install-steps{flex-basis:100%;margin:4px 0 0;padding-left:20px;font-size:14px;line-height:1.7}
 @media(max-width:600px){.install-app .btn{width:100%}}
+.promo-list{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.promo-card{background:linear-gradient(135deg,#2a0b36,#53145f 60%,#7a2a5c);color:white;border-radius:20px;padding:22px;display:grid;gap:10px;align-content:start}
+.promo-card h3{margin:0;font-size:22px}
+.promo-card p{margin:0;color:#e5dae7;font-size:14px;line-height:1.5}
+.promo-tag{font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:#ffd260}
+.promo-meta{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px;color:#e5dae7}
+.promo-meta b{font-size:20px;color:#ffd260}
+.promo-card .text-link{color:#ffd260}
+.promo-section{padding-bottom:0}
+.promo-note{font-size:12px;color:var(--muted);margin:10px 0 0;line-height:1.45}
+.promo-note.on{background:#fff1d1;color:#7a4a00;border-radius:10px;padding:9px 12px;font-size:13px}
+.booking-item .promo-note.on{display:inline-block;margin-top:8px;color:#7a4a00}
+.row .promo{display:inline-block;background:#fff1d1;color:#7a4a00;border-radius:8px;padding:3px 8px;margin-top:5px;font-size:12px;font-weight:700}
+.promo-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.promo-form label{display:grid;gap:5px;font-size:12px;font-weight:800}
+.promo-form input,.promo-form select,.promo-form textarea{border:1px solid var(--line);border-radius:10px;padding:9px;font:inherit;font-weight:400;background:white}
+.promo-form .wide,.promo-form .form-ok,.promo-form .form-error{grid-column:1/-1;margin:0}
+.promo-form .form-ok{background:#ddf3df;color:#28723b;border-radius:12px;padding:10px 12px;font-size:13px}
+.row.ended{opacity:.55}
+@media(max-width:900px){.promo-list{grid-template-columns:1fr}}
+@media(max-width:600px){.promo-form{grid-template-columns:1fr}}

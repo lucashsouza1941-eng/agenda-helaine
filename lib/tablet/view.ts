@@ -189,6 +189,7 @@ function card(b: TabletBooking, input: AgendaInput, isNext: boolean): string {
   // Linha de observação: o que a cliente escreveu ao agendar, mais os avisos da agenda.
   const start = toMinutes(b.time), end = start + (b.duration_minutes ?? 60);
   const notes: string[] = b.notes ? [b.notes] : [];
+  if (b.promo_title) notes.unshift(`Promoção: ${b.promo_title}`);
   if (isOpen(b) && input.flags.dayOff) notes.push('Marcado em dia de folga');
   else if (isOpen(b) && input.flags.blockedTimes.some((t) => toMinutes(t) >= start && toMinutes(t) < end)) notes.push('Passa por um horário bloqueado');
 

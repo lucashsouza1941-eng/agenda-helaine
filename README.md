@@ -12,6 +12,7 @@ Site de agendamento em Next.js com banco e login de admin no Supabase.
 - **Horários de atendimento:** de 30 em 30 minutos, das 08:00 às 19:30, enquanto nada for salvo no `/admin`. Lá os admins marcam em que horários um atendimento pode começar (há atalhos para marcar de 30 em 30 min ou de hora em hora) e até que horas vai o atendimento. A cliente só vê os horários em que o serviço escolhido cabe inteiro.
 - **Tempo de cada serviço:** cada serviço reserva um tempo na agenda (ex.: Box Braids, 6 horas), editável no `/admin`. Enquanto um atendimento não termina, nenhuma cliente consegue marcar outro: o site só mostra livres os horários em que o serviço inteiro cabe, e o banco recusa sobreposição.
 - **Fim do atendimento:** nenhum serviço pode terminar depois do horário de fechamento (20:00 por padrão, editável no `/admin` em "Horários de atendimento").
+- **Instalar como aplicativo:** o site tem manifesto e ícones, então pode ser instalado na tela inicial do celular. A página inicial mostra o botão "Instalar aplicativo" no Android e no computador (Chrome e Edge) e, no iPhone, o passo a passo do Safari. Não há service worker: nada da agenda fica guardado no aparelho.
 - **Painel do tablet:** `/admin/tablet` é uma agenda do dia para um iPad antigo (iOS 9), com acesso por PIN. Veja [docs/tablet-ipad.md](docs/tablet-ipad.md).
 - Novos agendamentos entram como **Pendente**. Cancelar libera o tempo reservado.
 

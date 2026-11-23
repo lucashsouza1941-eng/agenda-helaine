@@ -26,7 +26,7 @@ export const bookingServiceName = (b:{service_id:string; service_name?:string|nu
 /** Tamanho máximo das observações da cliente (igual ao do banco). */
 export const NOTES_MAX = 500;
 /** Gradientes para os cartões de serviços sem foto. */
-export const CARD_GRADIENTS = ['linear-gradient(135deg,#34103f,#8d3f62 55%,#f0a01a)','linear-gradient(135deg,#27132f,#703151 55%,#c87322)','linear-gradient(135deg,#331743,#7f255f 55%,#e1a12a)','linear-gradient(135deg,#251029,#5b1e56 55%,#b8761f)','linear-gradient(135deg,#1b1426,#5b2657 55%,#d89e23)'];
+export const CARD_GRADIENTS = ['linear-gradient(135deg,#33004f,#7a1fa8 55%,#fbae52)','linear-gradient(135deg,#2a0042,#65109a 55%,#f39a35)','linear-gradient(135deg,#3a005c,#7a1fa8 55%,#f7c6fb)','linear-gradient(135deg,#33004f,#5e0f8f 55%,#f39a35)','linear-gradient(135deg,#2a0042,#65109a 55%,#fbae52)'];
 /** "Box Braids!" -> "box-braids" (id de um serviço novo). */
 export const slugify = (text:string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40).replace(/-+$/,'');
 /** Data de hoje (AAAA-MM-DD) no fuso de São Paulo. */

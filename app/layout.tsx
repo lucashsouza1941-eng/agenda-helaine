@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import '@fontsource/anton/latin-400.css';
+import '@fontsource/dm-serif-display/latin-400.css';
 import './globals.css';
+import './street.css';
 
 const description = 'Tranças com atendimento cuidadoso. Escolha o serviço, a data e o horário e agende online, sem precisar criar conta.';
 // Na Vercel, o endereço de produção vem desta variável; sem ela, os links da prévia ficam relativos ao localhost.
@@ -15,7 +18,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Helaine', statusBarStyle: 'default' },
 };
 
-export const viewport: Viewport = { themeColor: '#4d135f' };
+export const viewport: Viewport = { themeColor: '#4b0076' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
